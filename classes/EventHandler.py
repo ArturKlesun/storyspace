@@ -6,22 +6,24 @@ import json
 import sys
 from classes.Block import Block
 from classes.Fp import vectorDiff
-from Tkinter import Tk
 from classes.Clipboard import Clipboard
+from classes.Screen import Screen
+from pygame.constants import *
 
 pygame.init()
 
 class EventHandler(object):
 
+	IS_RESIZING = False
 	IS_MOUSE_DOWN = False
-	LAST_DRAG_POS = (0,0)
+	CUR_MOUSE_POS = [0,0]
 
 	@staticmethod
 	def handlePygame(blockList):
 		for event in pygame.event.get():
 			if event.type == pygame.KEYDOWN:
 				
-				if event.mod & event.mod == pygame.KMOD_LCTRL: # ONLY lctr
+				if event.mod == pygame.KMOD_LCTRL: # ONLY lctr
 					
 					if event.key == pygame.K_s:
 						fileObj = open('asd.json', 'w')
@@ -35,60 +37,80 @@ class EventHandler(object):
 						fileContent = json.loads(fileObj.read())
 						del blockList[:]
 						for blockData in fileContent:
-							block = Block()
-							block.setDataFromFile(blockData)
-							blockList.append(block)
+							blockList.append(Block(blockData))
 						fileObj.close()
 
 					elif event.key == pygame.K_n:
-						blockList.append(Block())
+						block = Block()
+						blockList.append(block)
+						block.acquireFocus()
 
 					elif event.key == pygame.K_c:
 						Clipboard.add('huj')
 					elif event.key == pygame.K_v:
-						Block.FOCUSED_BLOCK.insertIntoText(Clipboard.get())
+						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(Clipboard.get())
 
 					elif event.key == pygame.K_UP:
-						Block.FOCUSED_BLOCK.scroll(-1)
+						Block.FOCUSED_BLOCK.getChildTextfield().scroll(-1)
 					elif event.key == pygame.K_DOWN:
-						Block.FOCUSED_BLOCK.scroll(1)
-	
-				elif event.key == pygame.K_LEFT:
-					Block.FOCUSED_BLOCK.movePointer(-1)
-				elif event.key == pygame.K_RIGHT:
-					Block.FOCUSED_BLOCK.movePointer(1)
+						Block.FOCUSED_BLOCK.getChildTextfield().scroll(1)
+					
+					elif event.key == pygame.K_i:
+						print blockList
 
 				elif not event.mod: 
 					
-					if event.key == pygame.K_BACKSPACE:
-						Block.FOCUSED_BLOCK.deleteFromText(-1)
+					if event.key == pygame.K_LEFT:
+						Block.FOCUSED_BLOCK.getChildTextfield().movePointer(-1)
+						
+					elif event.key == pygame.K_RIGHT:
+						Block.FOCUSED_BLOCK.getChildTextfield().movePointer(1)
+						
+					elif event.key == pygame.K_DOWN:
+						Block.FOCUSED_BLOCK.getChildTextfield().movePar(1)
+						
+					elif event.key == pygame.K_UP:
+						Block.FOCUSED_BLOCK.getChildTextfield().movePar(-1)
+					
+					elif event.key == pygame.K_BACKSPACE:
+						Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(-1)
 
 					elif event.key == pygame.K_DELETE:
-						Block.FOCUSED_BLOCK.deleteFromText(1)
+						Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(1)
 
 					elif event.key == pygame.K_RETURN:
-						Block.FOCUSED_BLOCK.insertIntoText('\n')
+						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText('\n')
 
 					elif len(event.unicode):
-						Block.FOCUSED_BLOCK.insertIntoText(event.unicode)
+						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(event.unicode)
 
-			if event.type == pygame.MOUSEBUTTONDOWN:
-				EventHandler.LAST_DRAG_POS = event.pos;
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				EventHandler.CUR_MOUSE_POS = event.pos;
 				for block in blockList:
 					if block.isPointed(event.pos):
 						block.acquireFocus()
+						if block.isResizeCornerPointed(event.pos):
+							EventHandler.IS_RESIZING = True
 						break
 					Block.releaseFocus()
 				EventHandler.IS_MOUSE_DOWN = True
 
-			if event.type == pygame.MOUSEBUTTONUP:
+			elif event.type == pygame.MOUSEBUTTONUP:
 				EventHandler.IS_MOUSE_DOWN = False
+				EventHandler.IS_RESIZING = False
 
-			if event.type == pygame.MOUSEMOTION:
-				if EventHandler.IS_MOUSE_DOWN: Block.FOCUSED_BLOCK.posAddVector( vectorDiff(event.pos, EventHandler.LAST_DRAG_POS) )
+			elif event.type == pygame.MOUSEMOTION:
 				
-				EventHandler.LAST_DRAG_POS = event.pos
+				if EventHandler.IS_MOUSE_DOWN:
+					if EventHandler.IS_RESIZING:
+						Block.FOCUSED_BLOCK.sizeAddVector( vectorDiff(event.pos, EventHandler.CUR_MOUSE_POS) )
+					else:
+						Block.FOCUSED_BLOCK.posAddVector( vectorDiff(event.pos, EventHandler.CUR_MOUSE_POS) )
+				EventHandler.CUR_MOUSE_POS = event.pos
 
-			if event.type == pygame.QUIT:
+			elif event.type==VIDEORESIZE:
+				Screen.setScreen(pygame.display.set_mode(event.dict['size'],HWSURFACE|DOUBLEBUF|RESIZABLE))
+			
+			elif event.type == pygame.QUIT:
 				sys.exit()
 		

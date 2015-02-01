@@ -4,16 +4,16 @@
 import pygame
 from classes.Block import Block
 from classes.EventHandler import EventHandler
-
-
-size = width, height = 400, 400
-screen = pygame.display.set_mode(size)
+from pygame.constants import *
+from classes.Screen import Screen
 
 blockList = []
 
 while 1:
 	EventHandler.handlePygame(blockList)
-	screen.fill((0,0,0))
+
+	Screen.screen.fill([0,0,0])
 	for block in blockList: #: :type block: Block
-		block.drawOn(screen)
+		block.drawOn(Screen.screen)
 	pygame.display.flip()
+	pygame.time.delay(40)

@@ -1,18 +1,12 @@
 [
     {
-        "text": "asda\nasdsaffasfas\nasfasklwnek fkn\nlsn sd sdf sf sdf sdfds sdf\nh \n\n\nsdif hiowfji jfdkskfjm\n", 
         "rate": 0, 
         "pos": [
-            172, 
-            154
-        ]
-    }, 
-    {
-        "text": "ksdfhsjukfbdsj\n\nfsdhfs f sdgsd sf\nsd fds \nsd \n\n sdfdsfsf sd\n", 
-        "rate": 0, 
-        "pos": [
-            13, 
-            20
+            103, 
+            100
+        ], 
+        "paragraphTextList": [
+            "hhddn"
         ]
     }
 ]

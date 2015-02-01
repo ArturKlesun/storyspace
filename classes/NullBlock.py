@@ -1,29 +1,25 @@
 from classes.Fp import overrides
 from classes.AbstractBlock import AbstractBlock
+from classes.NullTextfield import NullTextfield
 
 class NullBlock(AbstractBlock):
 
 	@overrides(AbstractBlock)
-	def __init__(self, blockId):
+	def __init__(self):
 		pass
 
 	@overrides(AbstractBlock)
-	def movePointer(self, n):
-		pass
+	def isResizeCornerPointed(self):
+		return False
 
+	@overrides(AbstractBlock)
+	def sizeAddVector(self, vector):
+		pass
+	
 	@overrides(AbstractBlock)
 	def posAddVector(self, vector):
 		pass
 
 	@overrides(AbstractBlock)
-	def insertIntoText(self, substr):
-		pass
-
-	@overrides(AbstractBlock)
-	def deleteFromText(self, n):
-		pass
-
-	@overrides(AbstractBlock)
-	def scroll(self, n):
-		pass
-		
+	def getChildTextfield(self):
+		return NullTextfield()

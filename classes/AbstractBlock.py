@@ -7,9 +7,13 @@ class AbstractBlock(object):
 	@abstractmethod
 	def __init__(self, blockId):
 		raise NotImplementedError("Please Implement this method")
-	
+
 	@abstractmethod
-	def movePointer(self, n):
+	def isResizeCornerPointed(self):
+		raise NotImplementedError("Please Implement this method")
+
+	@abstractmethod
+	def sizeAddVector(self, vector):
 		raise NotImplementedError("Please Implement this method")
 
 	@abstractmethod
@@ -17,14 +21,5 @@ class AbstractBlock(object):
 		raise NotImplementedError("Please Implement this method")
 
 	@abstractmethod
-	def insertIntoText(self, substr):
+	def getChildTextfield(self):
 		raise NotImplementedError("Please Implement this method")
-
-	@abstractmethod
-	def deleteFromText(self, n):
-		raise NotImplementedError("Please Implement this method")
-
-	@abstractmethod
-	def scroll(self, n):
-		raise NotImplementedError("Please Implement this method")
-		
