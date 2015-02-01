@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import pygame
+import time
+import operator
 from classes.Paragraph import Paragraph
 from classes.Constants import Constants
 from classes.Fp import overrides
@@ -13,7 +15,7 @@ class Textfield(object):
 	pointerParagraph = 0
 	scrollPos = 0
 
-	textFieldBitmapChanged = False
+	rowListChanged = True
 	textfieldBitmap = pygame.Surface([1, 1])
 	
 	def __init__(self, parentBlock):
@@ -34,12 +36,12 @@ class Textfield(object):
 			self.setPointerPar(self.pointerParagraph - 1)
 			pointerPos += self.getCurPar().getTextLen()
 		self.setPointerPos(pointerPos)
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	def movePar(self, n):
 		self.setPointerPar(self.pointerParagraph + n)
 		self.setPointerPos(self.pointerPos)
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	# may have memory leaks
 	@overrides(AbstractTextfield)
@@ -55,7 +57,7 @@ class Textfield(object):
 			parPos += 1
 			self.paragraphList.insert(parPos, Paragraph(self, parText))
 		self.movePointer(substrLen)
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	def deleteFromText(self, n):
 		if n < 0:
@@ -75,17 +77,17 @@ class Textfield(object):
 				n -= self.getCurPar().getTextLen()
 				self.paragraphList.pop(self.pointerParagraph)
 			self.getCurPar().crop(n, -1).prepend(prependToLast)
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	def scroll(self, n):
 		self.scrollPos += n
 		if self.scrollPos < 0: self.scrollPos = 0
 		if self.scrollPos >= self.getFullRowCount(): self.scrollPos = self.getFullRowCount() - 1
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	def recalcSize(self):
 		# self.width = self.getParentBlock().width - epsilon
-		self.textFieldBitmapChanged = True
+		self.rowListChanged = True
 
 	def getFullRowCount(self): # TODO: may be wrong
 		return len(self.getFullRowList())
@@ -125,25 +127,69 @@ class Textfield(object):
 		return self.getParentBlock().getHeight() # minus epsilon
 
 	def getTextfieldBitmap(self):
-		contentSurface = pygame.Surface(self.size())
-		contentSurface.fill([255,255,255])
+		if self.rowListChanged:
+			self.textfieldBitmap = self.calcTextfieldBitmap()
+			self.rowListChanged = False
 		
-		rowListToPrint = self.getFullRowList()[self.scrollPos : self.scrollPos + self.getPrintedRowCount()]
+		return self.textfieldBitmap
 
-		i = 0
-		for row in rowListToPrint:
-			label = Constants.PROJECT_FONT.render(row, 1, [0,0,0])
-			contentSurface.blit(label, [0, i * Constants.CHAR_HEIGHT])
-			i += 1
+	def calcTextfieldBitmap(self):
+		startTime = time.time()
+		timeDict = {'begin calcing: ': startTime}
+		contentSurface = pygame.Surface(self.size())
+		timeDict['created surface: '] = time.time()
+		contentSurface.fill([255,255,255])
+		timeDict['filled surface: '] = time.time()
+
+		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
+		y = 0
+
+		while (y < self.getHeight() and parIdx < len(self.getParagraphList())):
+			bitmap = self.paragraphList[parIdx].getBitmap(rowIdx)
+			rowIdx = 0
+			contentSurface.blit(bitmap, [0,y])
+			y += bitmap.get_height()
+			parIdx += 1
+			
+		
+# 		rowListToPrint = self.getFullRowList()[self.scrollPos : self.scrollPos + self.getPrintedRowCount()]
+# 		timeDict['got rows to print: '] = time.time()
+# 
+# 		i = 0
+# 		for row in rowListToPrint:
+# 			#label = Constants.PROJECT_FONT.render(row, 1, [0,0,0], [255,255,255])
+# 			timeDict[str(i) + ' rendered label: '] = time.time()
+# 			contentSurface.blit(label, [0, i * Constants.CHAR_HEIGHT])
+# 			timeDict[str(i) + 'blitted label: '] = time.time()
+# 			i += 1
+# 		timeDict['printed labels: '] = time.time()
 
 		pointerRow, pointerCol = self.getPointerRowAndCol()
+		timeDict['got pointer and row: '] = time.time()
 		if (pointerRow >= self.scrollPos and pointerRow < self.scrollPos + self.getPrintedRowCount()):
 			printedRow = pointerRow - self.scrollPos
 			pygame.draw.line(contentSurface, [255,0,0], 
 							[pointerCol * Constants.CHAR_WIDTH, (printedRow) * Constants.CHAR_HEIGHT], 
 							[pointerCol * Constants.CHAR_WIDTH, (printedRow + 1) * Constants.CHAR_HEIGHT])
-		
+		timeDict['drawn pointer: '] = time.time()
+# 		for step in sorted(timeDict.iteritems(), key=operator.itemgetter(1)): 
+# 			print str((step[1] - startTime) * 1000) + ' ' + step[0]
+
 		return contentSurface
+
+	def getParIdxAndRowIdxToPrintFrom(self):
+		scrollPos = self.scrollPos
+		parIdx = 0
+		rowIdx = 0
+		while scrollPos > 0:
+			scrollPos -= len(self.paragraphList[parIdx].getRowList())
+			parIdx += 1
+		if scrollPos < 0:
+			parIdx -= 1
+			rowIdx = len(self.paragraphList[parIdx].getRowList()) + scrollPos
+		
+		return parIdx, rowIdx;
+		
 
 	def getParagraphList(self):
 		return self.paragraphList

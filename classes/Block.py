@@ -38,7 +38,7 @@ class Block(AbstractBlock):
 		contentSurface = self.getChildTextfield().getTextfieldBitmap()
 
 		if (self.isResizeCornerPointed(classes.EventHandler.EventHandler.CUR_MOUSE_POS) and self.isPointed(classes.EventHandler.EventHandler.CUR_MOUSE_POS)): 
-			pygame.draw.circle(contentSurface, [0,0,255], [self.width, self.height], Block.RESIZE_CORNER_RADIUS, 0)
+			pygame.draw.circle(contentSurface, [0,0,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
 		
 		frameSurface.blit(contentSurface, [Constants.BLOCK_FRAME_WIDTH, Constants.BLOCK_FRAME_WIDTH, self.getWidth(), self.getHeight()]) # self.width, self.height))
 		screen.blit(frameSurface, (	self.left - Constants.BLOCK_FRAME_WIDTH, self.top - Constants.BLOCK_FRAME_WIDTH, 
