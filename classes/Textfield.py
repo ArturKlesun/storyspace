@@ -58,32 +58,23 @@ class Textfield(object):
 		self.textFieldBitmapChanged = True
 
 	def deleteFromText(self, n):
-		print 'Gonna to delete text'
 		if n < 0:
 			appendToFirst = self.getCurPar().getText()[self.pointerPos:]
-			self.getCurPar().setText( self.getCurPar().getText()[:self.pointerPos] )
-			endPar = self.pointerParagraph
+			self.getCurPar().crop(0, self.pointerPos)
+			firstPar = self.pointerParagraph
 			self.movePointer(n)
-			while self.paragraphList[endPar].getTextLen() + n <= 0 and endPar > 0:
-				# TODO: doesn't work
-				n += self.paragraphList[endPar].getTextLen()
-				self.paragraphList.pop(endPar)
-				endPar -= 1
-			self.paragraphList[endPar].setText( self.paragraphList[endPar].getText()[self.getCurPar().getTextLen() - 1 + n] + appendToFirst ) # TODO: definitely mistake
+			while self.paragraphList[firstPar].getTextLen() + n <= 0 and firstPar > 0:
+				n += self.paragraphList[firstPar].getTextLen()
+				self.paragraphList.pop(firstPar)
+				firstPar -= 1
+			self.paragraphList[firstPar].crop(0, n - 1).append(appendToFirst)
 		elif n > 0:
-			print('was: ' + self.getCurPar().getText());
 			prependToLast = self.getCurPar().getText()[:self.pointerPos]
-			print('prependToLast: ' + prependToLast);
 			self.getCurPar().crop(self.pointerPos, -1)
-			print('is: ' + self.getCurPar().getText());
 			while self.getCurPar().getTextLen() - n <= 0 and self.pointerParagraph != len(self.paragraphList) - 1:
 				n -= self.getCurPar().getTextLen()
 				self.paragraphList.pop(self.pointerParagraph)
-			print('is: ' + self.getCurPar().getText());
-			self.getCurPar().crop(n, -1);
-			print('is: ' + self.getCurPar().getText());
-			self.getCurPar().prepend(prependToLast)
-			print('became: ' + self.getCurPar().getText());
+			self.getCurPar().crop(n, -1).prepend(prependToLast)
 		self.textFieldBitmapChanged = True
 
 	def scroll(self, n):
@@ -137,8 +128,8 @@ class Textfield(object):
 		contentSurface = pygame.Surface(self.size())
 		contentSurface.fill([255,255,255])
 		
-		# deadlock if contains some text
 		rowListToPrint = self.getFullRowList()[self.scrollPos : self.scrollPos + self.getPrintedRowCount()]
+
 		i = 0
 		for row in rowListToPrint:
 			label = Constants.PROJECT_FONT.render(row, 1, [0,0,0])
@@ -153,56 +144,6 @@ class Textfield(object):
 							[pointerCol * Constants.CHAR_WIDTH, (printedRow + 1) * Constants.CHAR_HEIGHT])
 		
 		return contentSurface
-
-	# please, don't use me!
-# 	def getTextfieldBitmap(self):
-# 		
-# 		if self.textFieldBitmapChanged:
-# 			# ���� ��� ������ - ������� ��� �� �����
-# 			charInRowCount = self.width / Constants.CHAR_WIDTH
-# 			rowCount = self.height / Constants.CHAR_HEIGHT
-# 	
-# 			row = 0
-# 			par = 0
-# 	
-# 			contentSurface = pygame.Surface([self.width, self.height])
-# 			contentSurface.fill([255,255,255])
-# 	
-# 			pointerRow = self.pointerPos / charInRowCount
-# 			pointerCol = self.pointerPos % charInRowCount
-# 	
-# 			scrollLeft = self.scrollPos
-# 	
-# 			while row < rowCount and par < len(self.paragraphList):
-# 				if (par == self.pointerParagraph): # ��� ����� ��������?
-# 					pointerRow += row
-# 				#textLeft = self.paragraphList[par]
-# 				parRowList = self.paragraphList[par].gerRowList()
-# 				atLeastOne = True
-# 				while (len(textLeft) or atLeastOne) and row < rowCount:
-# 					atLeastOne = False # �������� ����
-# 					if (scrollLeft > 0):
-# 						# ���� ��� ������. � �� ������ ����������� ���� �����
-# 						textLeft = textLeft[charInRowCount:]
-# 						scrollLeft -= 1
-# 						if (par == self.pointerParagraph): # �������� ����!
-# 							pointerRow -= 1
-# 							#pointerScrolling = scrollLeft
-# 					else:
-# 						label = Constants.PROJECT_FONT.render(textLeft[:charInRowCount], 1, [0,0,0])
-# 						textLeft = textLeft[charInRowCount:]
-# 						contentSurface.blit(label, [0, row*Constants.CHAR_HEIGHT])
-# 						row += 1
-# 				par += 1
-# 	
-# 			pygame.draw.line(contentSurface, [255,0,0], 
-# 							[pointerCol * Constants.CHAR_WIDTH, (pointerRow) * Constants.CHAR_HEIGHT], 
-# 							[pointerCol * Constants.CHAR_WIDTH, (pointerRow + 1) * Constants.CHAR_HEIGHT])
-# 			
-# 			self.textfieldBitmap = contentSurface
-# 			self.textFieldBitmapChanged = False
-# 		
-# 		return self.textfieldBitmap
 
 	def getParagraphList(self):
 		return self.paragraphList

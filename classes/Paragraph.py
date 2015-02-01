@@ -19,10 +19,11 @@ class Paragraph(object):
 
 	def crop(self, l, r = -1):
 		r = self.getTextLen() + r if r < 0 else r
-		print('cropping: l=' + str(l) + ', r=' + str(r) + ', was=' + self.getText())
-		print('huj text[l:r]' + self.getText()[l:r])
 		self.setText(self.getText()[l:r])
-		print('became: ' + self.getText())
+		return self
+
+	def append(self, strToAppend):
+		self.setText(self.getText() + strToAppend)
 		return self
 
 	def prepend(self, strToPrepend):
