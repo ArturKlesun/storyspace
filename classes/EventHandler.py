@@ -21,68 +21,9 @@ class EventHandler(object):
 	@staticmethod
 	def handlePygame(blockList):
 		for event in pygame.event.get():
+			# TODO: KeyHold
 			if event.type == pygame.KEYDOWN:
-				
-				if event.mod == pygame.KMOD_LCTRL: # ONLY lctr
-					
-					if event.key == pygame.K_s:
-						fileObj = open('asd.json', 'w')
-						fileContent= [];
-						for block in blockList:
-							fileContent.append(block.getDataForFileSave())
-						fileObj.write(json.dumps(fileContent, ensure_ascii=False, indent=4).encode('utf8'))
-						fileObj.close()
-					elif event.key == pygame.K_o:
-						fileObj = open('asd.json', 'r')
-						fileContent = json.loads(fileObj.read())
-						del blockList[:]
-						for blockData in fileContent:
-							blockList.append(Block(blockData))
-						fileObj.close()
-
-					elif event.key == pygame.K_n:
-						block = Block()
-						blockList.append(block)
-						block.acquireFocus()
-
-					elif event.key == pygame.K_c:
-						Clipboard.add('huj')
-					elif event.key == pygame.K_v:
-						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(Clipboard.get())
-
-					elif event.key == pygame.K_UP:
-						Block.FOCUSED_BLOCK.getChildTextfield().scroll(-1)
-					elif event.key == pygame.K_DOWN:
-						Block.FOCUSED_BLOCK.getChildTextfield().scroll(1)
-					
-					elif event.key == pygame.K_i:
-						print blockList
-
-				elif not event.mod: 
-					
-					if event.key == pygame.K_LEFT:
-						Block.FOCUSED_BLOCK.getChildTextfield().movePointer(-1)
-						
-					elif event.key == pygame.K_RIGHT:
-						Block.FOCUSED_BLOCK.getChildTextfield().movePointer(1)
-						
-					elif event.key == pygame.K_DOWN:
-						Block.FOCUSED_BLOCK.getChildTextfield().movePar(1)
-						
-					elif event.key == pygame.K_UP:
-						Block.FOCUSED_BLOCK.getChildTextfield().movePar(-1)
-					
-					elif event.key == pygame.K_BACKSPACE:
-						Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(-1)
-
-					elif event.key == pygame.K_DELETE:
-						Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(1)
-
-					elif event.key == pygame.K_RETURN:
-						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText('\n')
-
-					elif len(event.unicode):
-						Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(event.unicode)
+				EventHandler.handleKeydown(event, blockList)
 
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				EventHandler.CUR_MOUSE_POS = event.pos;
@@ -97,7 +38,11 @@ class EventHandler(object):
 
 			elif event.type == pygame.MOUSEBUTTONUP:
 				EventHandler.IS_MOUSE_DOWN = False
-				EventHandler.IS_RESIZING = False
+				if EventHandler.IS_RESIZING:
+					for par in Block.FOCUSED_BLOCK.getChildTextfield().getParagraphList(): #: :type par: Paragraph
+						par.rowListChanged = True
+					Block.FOCUSED_BLOCK.getChildTextfield().rowListChanged = True
+					EventHandler.IS_RESIZING = False
 
 			elif event.type == pygame.MOUSEMOTION:
 				
@@ -113,4 +58,69 @@ class EventHandler(object):
 			
 			elif event.type == pygame.QUIT:
 				sys.exit()
+
+	@staticmethod
+	def handleKeydown(event, blockList):
 		
+		# excluding capslocks, numlocks, etc...
+		bitMask = event.mod & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
+		
+		if bitMask & pygame.KMOD_LCTRL:
+			if event.key == pygame.K_s:
+				fileObj = open('asd.json', 'w')
+				fileContent= [];
+				for block in blockList:
+					fileContent.append(block.getDataForFileSave())
+				fileObj.write(json.dumps(fileContent, ensure_ascii=False, indent=4).encode('utf8'))
+				fileObj.close()
+			elif event.key == pygame.K_o:
+				fileObj = open('asd.json', 'r')
+				fileContent = json.loads(fileObj.read())
+				del blockList[:]
+				for blockData in fileContent:
+					blockList.append(Block(blockData))
+				fileObj.close()
+
+			elif event.key == pygame.K_n:
+				block = Block()
+				blockList.append(block)
+				block.acquireFocus()
+
+			elif event.key == pygame.K_c:
+				Clipboard.add('huj')
+			elif event.key == pygame.K_v:
+				Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(Clipboard.get())
+
+			elif event.key == pygame.K_UP:
+				Block.FOCUSED_BLOCK.getChildTextfield().scroll(-1)
+			elif event.key == pygame.K_DOWN:
+				Block.FOCUSED_BLOCK.getChildTextfield().scroll(1)
+			
+			elif event.key == pygame.K_i:
+				print blockList
+
+		elif not bitMask: 
+			
+			if event.key == pygame.K_LEFT:
+				Block.FOCUSED_BLOCK.getChildTextfield().movePointer(-1)
+				
+			elif event.key == pygame.K_RIGHT:
+				Block.FOCUSED_BLOCK.getChildTextfield().movePointer(1)
+				
+			elif event.key == pygame.K_DOWN:
+				Block.FOCUSED_BLOCK.getChildTextfield().movePar(1)
+				
+			elif event.key == pygame.K_UP:
+				Block.FOCUSED_BLOCK.getChildTextfield().movePar(-1)
+			
+			elif event.key == pygame.K_BACKSPACE:
+				Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(-1)
+
+			elif event.key == pygame.K_DELETE:
+				Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(1)
+
+			elif event.key == pygame.K_RETURN:
+				Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText('\n')
+
+			elif len(event.unicode):
+				Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(event.unicode)

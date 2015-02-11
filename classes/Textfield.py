@@ -35,6 +35,7 @@ class Textfield(object):
 		while pointerPos < 0 and self.pointerParagraph > 0:
 			self.setPointerPar(self.pointerParagraph - 1)
 			pointerPos += self.getCurPar().getTextLen()
+		
 		self.setPointerPos(pointerPos)
 		self.rowListChanged = True
 
@@ -79,8 +80,18 @@ class Textfield(object):
 			self.getCurPar().crop(n, -1).prepend(prependToLast)
 		self.rowListChanged = True
 
+	def moveScrollToPointer(self):
+		pointerRow = self.getPointerRowAndCol()[0]
+		if (pointerRow < self.scrollPos):
+			self.setScrollPos(pointerRow)
+		elif pointerRow >= self.scrollPos  + self.getPrintedRowCount():
+			self.setScrollPos(pointerRow - self.getPrintedRowCount() + 1)
+
 	def scroll(self, n):
-		self.scrollPos += n
+		self.setScrollPos(self.scrollPos + n)
+
+	def setScrollPos(self, value):
+		self.scrollPos = value
 		if self.scrollPos < 0: self.scrollPos = 0
 		if self.scrollPos >= self.getFullRowCount(): self.scrollPos = self.getFullRowCount() - 1
 		self.rowListChanged = True
@@ -134,48 +145,31 @@ class Textfield(object):
 		return self.textfieldBitmap
 
 	def calcTextfieldBitmap(self):
-		startTime = time.time()
-		timeDict = {'begin calcing: ': startTime}
+
 		contentSurface = pygame.Surface(self.size())
-		timeDict['created surface: '] = time.time()
 		contentSurface.fill([255,255,255])
-		timeDict['filled surface: '] = time.time()
 
 		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
+		
 		y = 0
-
 		while (y < self.getHeight() and parIdx < len(self.getParagraphList())):
 			bitmap = self.paragraphList[parIdx].getBitmap(rowIdx)
 			rowIdx = 0
 			contentSurface.blit(bitmap, [0,y])
 			y += bitmap.get_height()
 			parIdx += 1
-			
-		
-# 		rowListToPrint = self.getFullRowList()[self.scrollPos : self.scrollPos + self.getPrintedRowCount()]
-# 		timeDict['got rows to print: '] = time.time()
-# 
-# 		i = 0
-# 		for row in rowListToPrint:
-# 			#label = Constants.PROJECT_FONT.render(row, 1, [0,0,0], [255,255,255])
-# 			timeDict[str(i) + ' rendered label: '] = time.time()
-# 			contentSurface.blit(label, [0, i * Constants.CHAR_HEIGHT])
-# 			timeDict[str(i) + 'blitted label: '] = time.time()
-# 			i += 1
-# 		timeDict['printed labels: '] = time.time()
 
-		pointerRow, pointerCol = self.getPointerRowAndCol()
-		timeDict['got pointer and row: '] = time.time()
-		if (pointerRow >= self.scrollPos and pointerRow < self.scrollPos + self.getPrintedRowCount()):
-			printedRow = pointerRow - self.scrollPos
-			pygame.draw.line(contentSurface, [255,0,0], 
-							[pointerCol * Constants.CHAR_WIDTH, (printedRow) * Constants.CHAR_HEIGHT], 
-							[pointerCol * Constants.CHAR_WIDTH, (printedRow + 1) * Constants.CHAR_HEIGHT])
-		timeDict['drawn pointer: '] = time.time()
-# 		for step in sorted(timeDict.iteritems(), key=operator.itemgetter(1)): 
-# 			print str((step[1] - startTime) * 1000) + ' ' + step[0]
+		self.drawPointerOn(contentSurface)
 
 		return contentSurface
+
+	def drawPointerOn(self, surface):
+		pointerRow, pointerCol = self.getPointerRowAndCol()
+		if (pointerRow >= self.scrollPos and pointerRow < self.scrollPos + self.getPrintedRowCount()):
+			printedRow = pointerRow - self.scrollPos
+			pygame.draw.line(surface, [255,0,0], 
+				[pointerCol * Constants.CHAR_WIDTH, (printedRow) * Constants.CHAR_HEIGHT], 
+				[pointerCol * Constants.CHAR_WIDTH, (printedRow + 1) * Constants.CHAR_HEIGHT])
 
 	def getParIdxAndRowIdxToPrintFrom(self):
 		scrollPos = self.scrollPos
@@ -202,6 +196,7 @@ class Textfield(object):
 		if pointerPos < 0: pointerPos = 0
 		if pointerPos > len(self.getCurPar().getText()): pointerPos = len(self.getCurPar().getText())
 		self.pointerPos = pointerPos
+		self.moveScrollToPointer()
 		
 	def setPointerPar(self, pointerPar):
 		if pointerPar < 0: pointerPar = 0

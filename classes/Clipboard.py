@@ -13,7 +13,7 @@ elif _platform == "win32" or _platform == "win64":
 class Clipboard(object):
 
 	@staticmethod
-	def add(str):
+	def add(str): # TODO: for linux adds some bad data, that breaks program (breaks even editor)
 		r = Tk()
 		r.withdraw()
 		r.clipboard_clear()
@@ -25,7 +25,7 @@ class Clipboard(object):
 		returnValue = ''
 		if _platform == "linux" or _platform == "linux2":
 			cb = gtk.clipboard_get()
-			returnValue = cb.wait_for_text()
+			returnValue = cb.wait_for_text()   
 		elif _platform == "win32" or _platform == "win64":
 			win32clipboard.OpenClipboard()
 			winString = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
@@ -34,4 +34,5 @@ class Clipboard(object):
 		else:
 			# sorry, Mac
 			returnValue = ''
-		return returnValue
+
+		return returnValue if returnValue else ''

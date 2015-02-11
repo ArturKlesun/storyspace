@@ -43,6 +43,9 @@ class Paragraph(object):
 
 		return self
 
+	def recalcBitmap(self):
+		self.getRowList()
+
 	def getRowList(self):
 		if self.rowListChanged:
 			self.rowList = self.calcRowList()
@@ -62,8 +65,7 @@ class Paragraph(object):
 		return rowList if len(rowList) > 0 else ['']
 
 	def getBitmap(self, rowIdx=0):
-		print('huj ' + str(self.bitmap.get_height()) + str(rowIdx))
-		self.getRowList()
+		self.recalcBitmap()
 		bitmap = pygame.Surface([
 				self.bitmap.get_width(), 
 				self.bitmap.get_height() - rowIdx * Constants.CHAR_HEIGHT])
