@@ -99,6 +99,16 @@ class EventHandler(object):
 			elif event.key == pygame.K_i:
 				print blockList
 
+			elif event.key == pygame.K_LEFT:
+				Block.FOCUSED_BLOCK.getChildTextfield().ctrlMovePointer(-1)
+			elif event.key == pygame.K_RIGHT:
+				Block.FOCUSED_BLOCK.getChildTextfield().ctrlMovePointer(1)
+
+			elif event.key == pygame.K_BACKSPACE:
+				Block.FOCUSED_BLOCK.getChildTextfield().ctrlDeleteFromText(-1)
+			elif event.key == pygame.K_DELETE:
+				Block.FOCUSED_BLOCK.getChildTextfield().ctrlDeleteFromText(1)
+
 		elif not bitMask: 
 			
 			if event.key == pygame.K_LEFT:

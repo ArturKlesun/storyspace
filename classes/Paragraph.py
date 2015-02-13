@@ -4,6 +4,7 @@
 import pygame
 from classes.Fp import split
 from classes.Constants import Constants
+import re
 
 class Paragraph(object):
 
@@ -50,6 +51,15 @@ class Paragraph(object):
 		self.rowListChanged = True
 
 		return self
+
+	def getShiftToSpace(self, n):
+		shift = 0
+		if n > 0:
+			shift = ([m.start() for m in re.finditer(u'[^(а-яА-Яa-zA-Z)]', self.getTextAfterPointer()[1:]) ] + [-1])[0] + 1
+		if n < 0:
+			shift = ([-1] + ([m.start() for m in re.finditer(u'[^(а-яА-Яa-zA-Z)]', self.getTextBeforePointer()[:-1]) ]))[-1] - len(self.getTextBeforePointer()) + 1
+
+		return shift
 
 	def recalcBitmap(self):
 		self.getRowList()

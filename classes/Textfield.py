@@ -89,6 +89,11 @@ class Textfield(object):
 		self.getCurPar().setPointerPos(pointerPos)
 		self.moveScrollToPointer()
 		self.rowListChanged = True
+
+	def ctrlMovePointer(self, n):
+		self.movePointer(self.getCurPar().getShiftToSpace(n))
+	def ctrlDeleteFromText(self, n):
+		self.deleteFromText(self.getCurPar().getShiftToSpace(n))
 	
 	def movePointerInRows(self, rowCount):
 		# maybe not the bestt approach to deal with deeds, but works
