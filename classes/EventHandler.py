@@ -108,10 +108,10 @@ class EventHandler(object):
 				Block.FOCUSED_BLOCK.getChildTextfield().movePointer(1)
 				
 			elif event.key == pygame.K_DOWN:
-				Block.FOCUSED_BLOCK.getChildTextfield().movePar(1)
+				Block.FOCUSED_BLOCK.getChildTextfield().movePointerInRows(1)
 				
 			elif event.key == pygame.K_UP:
-				Block.FOCUSED_BLOCK.getChildTextfield().movePar(-1)
+				Block.FOCUSED_BLOCK.getChildTextfield().movePointerInRows(-1)
 			
 			elif event.key == pygame.K_BACKSPACE:
 				Block.FOCUSED_BLOCK.getChildTextfield().deleteFromText(-1)

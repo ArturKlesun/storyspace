@@ -8,6 +8,7 @@ from pygame.constants import *
 from classes.Screen import Screen
 
 blockList = []
+pygame.key.set_repeat(200, 25)
 
 while 1:
 	EventHandler.handlePygame(blockList)

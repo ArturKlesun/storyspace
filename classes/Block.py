@@ -107,7 +107,7 @@ class Block(AbstractBlock):
 			self.getChildTextfield().insertIntoText(parText + '\n')
 			
 		self.getChildTextfield().setPointerPar(0)
-		self.getChildTextfield().setPointerPos(0)
+		self.getChildTextfield().getCurPar().setPointerPos(0)
 	
 	def getWidth(self):
 		return self.size()[0]

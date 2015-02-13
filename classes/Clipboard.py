@@ -13,7 +13,7 @@ elif _platform == "win32" or _platform == "win64":
 class Clipboard(object):
 
 	@staticmethod
-	def add(str): # TODO: for linux adds some bad data, that breaks program (breaks even editor)
+	def add(str): # TODO: for linux adds some bad data, that breaks program (breaks even editor), but for windows works
 		r = Tk()
 		r.withdraw()
 		r.clipboard_clear()

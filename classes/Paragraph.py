@@ -10,10 +10,12 @@ class Paragraph(object):
 	text = u''
 
 	rowListChanged = True
+	pointerPos = 0
 
 	def __init__(self, parentTextfield, text):
 		self.parentTextfield = parentTextfield
 		self.setText(text)
+		self.pointerPos = 0
 		self.rowList = []
 		self.bitmap = pygame.Surface([1, 1])
 		self.rowListChanged = True
@@ -30,6 +32,12 @@ class Paragraph(object):
 		self.rowListChanged = True
 
 		return self
+
+	def cropToPointer(self):
+		return self.crop(0, self.getPointerPos())
+
+	def cropFromPointer(self):
+		return self.crop(self.getPointerPos(), -1)
 
 	def append(self, strToAppend):
 		self.setText(self.getText() + strToAppend)
@@ -86,6 +94,17 @@ class Paragraph(object):
 		
 		return surface
 
+	def getPointerRowIdx(self):
+		return self.getPointerPos() / self.getParentTextfield().getCharInRowCount()
+
+	def getPointerPos(self):
+		return self.pointerPos
+
+	def setPointerPos(self, pointerPos):
+		if pointerPos < 0: pointerPos = 0
+		if pointerPos > len(self.getText()): pointerPos = len(self.getText())
+		self.pointerPos = pointerPos
+
 	def getParentTextfield(self):
 		return self.parentTextfield
 		
@@ -97,6 +116,19 @@ class Paragraph(object):
 
 	def getText(self):
 		return self.text
+	
+	def getTextAfterPointer(self):
+		return self.text[self.getPointerPos():]
+
+	def getTextBeforePointer(self):
+		return self.text[:self.getPointerPos()]
+
+	def cutReplaceAfterPointer(self, postStr):
+		cut = self.getTextAfterPointer()
+		self.cropToPointer()
+		self.append(postStr)
+
+		return cut
 
 	def setText(self, value):
 		self.text = value
