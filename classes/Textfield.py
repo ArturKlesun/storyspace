@@ -49,7 +49,7 @@ class Textfield(object):
 
 	def deleteFromText(self, n):
 		if n < 0:
-			appendToFirst = self.getCurPar().getTextBeforePointer()
+			appendToFirst = self.getCurPar().getTextAfterPointer()
 			self.getCurPar().cropToPointer()
 			firstPar = self.pointerParagraph
 			self.movePointer(n)
