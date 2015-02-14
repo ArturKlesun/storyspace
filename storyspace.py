@@ -7,7 +7,7 @@ from classes.EventHandler import EventHandler
 from pygame.constants import *
 from classes.Screen import Screen
 
-FRAME_DELAY = 20
+FRAME_DELAY = 40
 
 blockList = []
 pygame.key.set_repeat(200, FRAME_DELAY)

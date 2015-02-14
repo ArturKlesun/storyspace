@@ -40,8 +40,8 @@ class EventHandler(object):
 				EventHandler.IS_MOUSE_DOWN = False
 				if EventHandler.IS_RESIZING:
 					for par in Block.FOCUSED_BLOCK.getChildTextfield().getParagraphList(): #: :type par: Paragraph
-						par.rowListChanged = True
-					Block.FOCUSED_BLOCK.getChildTextfield().rowListChanged = True
+						par.surfaceChanged = True
+					Block.FOCUSED_BLOCK.getChildTextfield().surfaceChanged = True
 					EventHandler.IS_RESIZING = False
 
 			elif event.type == pygame.MOUSEMOTION:
@@ -109,7 +109,7 @@ class EventHandler(object):
 			elif event.key == pygame.K_DELETE:
 				Block.FOCUSED_BLOCK.getChildTextfield().ctrlDeleteFromText(1)
 
-		elif not bitMask: 
+		elif not bitMask or bitMask == pygame.KMOD_SHIFT: 
 			
 			if event.key == pygame.K_LEFT:
 				Block.FOCUSED_BLOCK.getChildTextfield().movePointer(-1)
@@ -131,6 +131,13 @@ class EventHandler(object):
 
 			elif event.key == pygame.K_RETURN:
 				Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText('\n')
+
+			elif event.key == pygame.K_PAGEUP:
+				textfield = Block.FOCUSED_BLOCK.getChildTextfield()
+				textfield.movePointerInRows( - textfield.getPrintedRowCount() / 2 )
+			elif event.key == pygame.K_PAGEDOWN:
+				textfield = Block.FOCUSED_BLOCK.getChildTextfield()
+				textfield.movePointerInRows( textfield.getPrintedRowCount() / 2 )
 
 			elif len(event.unicode):
 				Block.FOCUSED_BLOCK.getChildTextfield().insertIntoText(event.unicode)

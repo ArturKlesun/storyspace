@@ -8,24 +8,26 @@ from classes.Paragraph import Paragraph
 from classes.Constants import Constants
 from classes.Fp import overrides
 from classes.AbstractTextfield import AbstractTextfield
+from classes.AbstractDrawable import AbstractDrawable
 
-class Textfield(object):
+class Textfield(AbstractTextfield):
 
 	pointerParagraph = 0
 	scrollPos = 0
 
-	rowListChanged = True
 	textfieldBitmap = pygame.Surface([1, 1])
 	
 	def __init__(self, parentBlock):
+		super(Textfield, self).__init__()
+
 		self.parentBlock = parentBlock
+		self.recalcSize()
 		
 		self.paragraphList = [Paragraph(self, '')]
 		self.scrollPos = 0
 
 	def __str__(self):
 		return '\n\t' + 'Textfield: ' + str(self.getParagraphList())
-
 
 	# operations with text
 
@@ -45,7 +47,7 @@ class Textfield(object):
 			self.getCurPar().append(appendToLast)
 
 		self.movePointer(substrLen)
-		self.rowListChanged = True
+		self.surfaceChanged = True
 
 	def deleteFromText(self, n):
 		if n < 0:
@@ -65,7 +67,7 @@ class Textfield(object):
 				n -= self.getCurPar().getTextLen()
 				self.paragraphList.pop(self.pointerParagraph)
 			self.getCurPar().crop(n, -1).prepend(prependToLast)
-		self.rowListChanged = True
+		self.surfaceChanged = True
 
 
 	def getParagraphList(self):
@@ -88,7 +90,7 @@ class Textfield(object):
 		
 		self.getCurPar().setPointerPos(pointerPos)
 		self.moveScrollToPointer()
-		self.rowListChanged = True
+		self.surfaceChanged = True
 
 	def ctrlMovePointer(self, n):
 		self.movePointer(self.getCurPar().getShiftToSpace(n))
@@ -102,12 +104,12 @@ class Textfield(object):
 				self.movePointer(self.getCharInRowCount())
 			elif self.getCurPar().getPointerRowIdx() < len(self.getCurPar().getRowList()) - 1:
 				self.getCurPar().setPointerPos(self.getCurPar().getTextLen() - 1)
-				self.rowListChanged = True
+				self.surfaceChanged = True
 			else:
 				pointerShift = self.getPointerRowAndCol()[1]
 				self.movePar(1)
 				self.getCurPar().setPointerPos(pointerShift)
-				self.rowListChanged = True
+				self.surfaceChanged = True
 		for i in range(rowCount, 0):
 			if len(self.getCurPar().getTextBeforePointer()) >= self.getCharInRowCount():
 				self.movePointer(-self.getCharInRowCount())
@@ -115,12 +117,13 @@ class Textfield(object):
 				pointerShift = self.getPointerRowAndCol()[1]
 				self.movePar(-1)				
 				self.getCurPar().setPointerPos( (len(self.getCurPar().getRowList()) - 1) * self.getCharInRowCount() + pointerShift )
-				self.rowListChanged = True
+				self.surfaceChanged = True
+		self.moveScrollToPointer()
 
 
 	def movePar(self, n):
 		self.setPointerPar(self.pointerParagraph + n)
-		self.rowListChanged = True
+		self.surfaceChanged = True
 
 	def getPointerRowAndCol(self):
 		resultRow = 0
@@ -154,7 +157,7 @@ class Textfield(object):
 		self.scrollPos = value
 		if self.scrollPos < 0: self.scrollPos = 0
 		if self.scrollPos >= self.getFullRowCount(): self.scrollPos = self.getFullRowCount() - 1
-		self.rowListChanged = True
+		self.surfaceChanged = True
 
 	# operations with bitmap
 
@@ -171,9 +174,10 @@ class Textfield(object):
 		
 		return parIdx, rowIdx;
 
+	@overrides(AbstractDrawable)
 	def recalcSize(self):
-		# self.width = self.getParentBlock().width - epsilon
-		self.rowListChanged = True
+		self.size(self.getParentBlock().calcTextfieldSize())
+		self.surfaceChanged = True
 
 	def getFullRowCount(self): # TODO: may be wrong
 		return len(self.getFullRowList())
@@ -189,22 +193,11 @@ class Textfield(object):
 
 	def getCharInRowCount(self):
 		return self.getWidth() / Constants.CHAR_WIDTH
-	
-	def size(self, value=None):
-		return self.getParentBlock().size(value)
-	
-	def getWidth(self):
-		# ?
-		return self.getParentBlock().getWidth() # minus epsilon
-	
-	def getHeight(self):
-		# ?
-		return self.getParentBlock().getHeight() # minus epsilon
 
 	def getTextfieldBitmap(self):
-		if self.rowListChanged:
+		if self.surfaceChanged:
 			self.textfieldBitmap = self.calcTextfieldBitmap()
-			self.rowListChanged = False
+			self.surfaceChanged = False
 		
 		return self.textfieldBitmap
 
@@ -215,12 +208,11 @@ class Textfield(object):
 
 		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
 		
-		y = 0
+		y = - rowIdx * Constants.CHAR_HEIGHT
 		while (y < self.getHeight() and parIdx < len(self.getParagraphList())):
-			bitmap = self.paragraphList[parIdx].getBitmap(rowIdx)
-			rowIdx = 0
-			contentSurface.blit(bitmap, [0,y])
-			y += bitmap.get_height()
+			bitmapHeight = len(self.paragraphList[parIdx].getRowList()) * Constants.CHAR_HEIGHT
+			self.paragraphList[parIdx].drawOn(contentSurface, [0,y])
+			y += bitmapHeight
 			parIdx += 1
 
 		self.drawPointerOn(contentSurface)
@@ -228,6 +220,7 @@ class Textfield(object):
 		return contentSurface
 
 	def drawPointerOn(self, surface):
+		# TODO: encapsulate into Paragraph
 		pointerRow, pointerCol = self.getPointerRowAndCol()
 		if (pointerRow >= self.scrollPos and pointerRow < self.scrollPos + self.getPrintedRowCount()):
 			printedRow = pointerRow - self.scrollPos

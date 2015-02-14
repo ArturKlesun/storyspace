@@ -1,23 +1,12 @@
 from abc import ABCMeta, abstractmethod
+from classes.AbstractDrawable import AbstractDrawable
 
-class AbstractBlock(object):
+class AbstractBlock(AbstractDrawable):
 
 	__metaclass__ = ABCMeta
-	
-	@abstractmethod
-	def __init__(self, blockId):
-		raise NotImplementedError("Please Implement this method")
 
 	@abstractmethod
 	def isResizeCornerPointed(self):
-		raise NotImplementedError("Please Implement this method")
-
-	@abstractmethod
-	def sizeAddVector(self, vector):
-		raise NotImplementedError("Please Implement this method")
-
-	@abstractmethod
-	def posAddVector(self, vector):
 		raise NotImplementedError("Please Implement this method")
 
 	@abstractmethod

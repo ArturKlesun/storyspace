@@ -1,12 +1,9 @@
 from abc import ABCMeta, abstractmethod
+from classes.AbstractDrawable import AbstractDrawable
 
-class AbstractTextfield(object):
+class AbstractTextfield(AbstractDrawable):
 	
 	__metaclass__ = ABCMeta
-	
-	@abstractmethod
-	def __init__(self):
-		raise NotImplementedError("Please Implement this method")
 	
 	@abstractmethod
 	def scroll(self, n):

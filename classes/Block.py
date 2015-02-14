@@ -3,24 +3,26 @@
 
 import pygame
 from AbstractBlock import AbstractBlock
-from classes.Fp import overrides, vectorSum, vectorDiff, isPointInRect,\
-	distanceBetween
+from classes.Fp import *
 from classes.NullBlock import NullBlock
 import classes
 from classes.Textfield import Textfield
 from classes.Constants import Constants
+from classes.AbstractDrawable import AbstractDrawable
 
 class Block(AbstractBlock):
+	STATUS_BAR_HEIGHT = Constants.CHAR_HEIGHT
 	FOCUSED_BLOCK = NullBlock() # AbstractBlock
 
 	rate = 0
-	width = 200
-	height = 200
-	left = 50
-	top = 50
 
 	def __init__(self, blockData=None):
+		super(Block, self).__init__()
+		self.size([200,200])
+		self.pos([50,50])
+		
 		self.childTextfield = Textfield(self)
+		self.childList.append(self.childTextfield)
 		if blockData != None:
 			self.setDataFromFile(blockData)
 	
@@ -30,7 +32,18 @@ class Block(AbstractBlock):
 	def __repr__(self):
 		return self.__str__() + '\n'
 
+	@overrides(AbstractDrawable)
 	def drawOn(self, screen):
+		# TODO: сделать, чтоб рама была внутри блока
+		screen.blit(
+				self.getBitmap(), 
+				(self.left - Constants.BLOCK_FRAME_WIDTH, 
+				self.top - Constants.BLOCK_FRAME_WIDTH, 
+				self.width + Constants.BLOCK_FRAME_WIDTH, 
+				self.height + Constants.BLOCK_FRAME_WIDTH))
+
+	@overrides(AbstractDrawable)
+	def getBitmap(self):
 		frameColor = [0,255,0] if self == Block.FOCUSED_BLOCK else [127,127,127]
 		frameSurface = pygame.Surface([self.width + Constants.BLOCK_FRAME_WIDTH*2, self.height + Constants.BLOCK_FRAME_WIDTH*2])
 		frameSurface.fill(frameColor)
@@ -39,24 +52,21 @@ class Block(AbstractBlock):
 
 		# TODO: рисовать по-нормальному, чтоб не закрывало текст
 		if (self.isResizeCornerPointed(classes.EventHandler.EventHandler.CUR_MOUSE_POS) and self.isPointed(classes.EventHandler.EventHandler.CUR_MOUSE_POS)): 
-			pygame.draw.circle(contentSurface, [0,0,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
+			pygame.draw.circle(contentSurface, [0,0,255], [self.width, self.height - self.getTextfieldTopIndent()], Constants.RESIZE_CORNER_RADIUS, 0)
 		else:
-			pygame.draw.circle(contentSurface, [255,255,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
+			pygame.draw.circle(contentSurface, [255,255,255], [self.width, self.height - self.getTextfieldTopIndent()], Constants.RESIZE_CORNER_RADIUS, 0)
 		
-		frameSurface.blit(contentSurface, [Constants.BLOCK_FRAME_WIDTH, Constants.BLOCK_FRAME_WIDTH, self.getWidth(), self.getHeight()]) # self.width, self.height))
-		screen.blit(
-				frameSurface, 
-				(self.left - Constants.BLOCK_FRAME_WIDTH, 
-				self.top - Constants.BLOCK_FRAME_WIDTH, 
-				self.width + Constants.BLOCK_FRAME_WIDTH, 
-				self.height + Constants.BLOCK_FRAME_WIDTH))
+		frameSurface.blit(contentSurface, [
+				Constants.BLOCK_FRAME_WIDTH, 
+				Constants.BLOCK_FRAME_WIDTH + self.getTextfieldTopIndent(), 
+				self.getWidth(), 
+				self.getHeight()])
+		
+		return frameSurface
 
 	@staticmethod
 	def releaseFocus():
 		Block.FOCUSED_BLOCK = NullBlock()
-
-	def isPointed(self, pointerPos):
-		return isPointInRect(pointerPos, (self.left, self.top, self.width, self.height))
 	
 	def acquireFocus(self):
 		Block.FOCUSED_BLOCK = self
@@ -74,26 +84,12 @@ class Block(AbstractBlock):
 	def getChildTextfield(self):
 		return self.childTextfield
 
-	def size(self, value = None):
-		if value != None:
-			self.width = max(value[0], Constants.CHAR_WIDTH)
-			self.height = max(value[1], Constants.CHAR_HEIGHT)
-			self.getChildTextfield().recalcSize()
-		return self.width, self.height
-			
-	def pos(self, value = None):
-		if value:
-			self.left = value[0]
-			self.top = value[1]
-		return self.left, self.top
+	def calcTextfieldSize(self):
+		return (self.getWidth(), self.getHeight() - self.getTextfieldTopIndent())
 
-	@overrides(AbstractBlock)
-	def sizeAddVector(self, vector):
-		self.size( vectorSum(self.size(), vector) )
-
-	@overrides(AbstractBlock)
-	def posAddVector(self, vector):
-		self.pos( vectorSum(self.pos(), vector) )
+	def getTextfieldTopIndent(self):
+		# TODO: if show statusbar
+		return self.STATUS_BAR_HEIGHT
 
 	def getDataForFileSave(self):
 		paragraphTextList = map(lambda par: par.getText(), self.getChildTextfield().getParagraphList())
@@ -108,9 +104,3 @@ class Block(AbstractBlock):
 			
 		self.getChildTextfield().setPointerPar(0)
 		self.getChildTextfield().getCurPar().setPointerPos(0)
-	
-	def getWidth(self):
-		return self.size()[0]
-
-	def getHeight(self):
-		return self.size()[1]
