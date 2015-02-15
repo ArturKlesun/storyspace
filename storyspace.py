@@ -6,17 +6,15 @@ from classes.Block import Block
 from classes.EventHandler import EventHandler
 from pygame.constants import *
 from classes.Screen import Screen
-
-FRAME_DELAY = 40
+from classes.TimerHandler import TimerHandler
 
 blockList = []
-pygame.key.set_repeat(200, FRAME_DELAY)
+pygame.key.set_repeat(200, 20)
 
 while 1:
-	EventHandler.handlePygame(blockList)
+	EventHandler.handlePygame()
 
-	Screen.screen.fill([0,0,0])
-	for block in blockList: #: :type block: Block
-		block.drawOn(Screen.screen)
+	Screen.getInstance().getSurface()
 	pygame.display.flip()
-	pygame.time.delay(FRAME_DELAY)
+
+	TimerHandler.getInstance().handleFrame()

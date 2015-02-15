@@ -14,8 +14,8 @@ class Paragraph(AbstractDrawable):
 	pointerPos = 0
 
 	def __init__(self, parentTextfield, text):
-		self.parentTextfield = parentTextfield
-		parentTextfield.childList.append(self)
+		super(Paragraph, self).__init__(parentTextfield)
+
 		self.setText(text)
 		self.pointerPos = 0
 		self.rowList = []
@@ -28,18 +28,11 @@ class Paragraph(AbstractDrawable):
 	def __repr__(self):
 		return '\n\t\t' + self.__str__()
 
-	def crop(self, l, r = -1):
-		r = self.getTextLen() + r if r < 0 else r
-		self.setText(self.getText()[l:r])
-		self.surfaceChanged = True
-
-		return self
-
 	def getParentTextfield(self):
-		return self.parentTextfield
+		return self.getParent()
 		
 	def setParentTextfield(self, value):
-		self.parentTextfield = value
+		self.setParent(value)
 
 	# operations with pointer
 
@@ -69,18 +62,20 @@ class Paragraph(AbstractDrawable):
 		self.append(postStr)
 
 		return cut
+
 	# operations with text
+
+	def crop(self, l, r = -1):
+		r = self.getTextLen() + r if r < 0 else r
+		self.setText(self.getText()[l:r])
+		return self
 
 	def append(self, strToAppend):
 		self.setText(self.getText() + strToAppend)
-		self.surfaceChanged = True
-
 		return self
 
 	def prepend(self, strToPrepend):
 		self.setText(strToPrepend + self.getText())
-		self.surfaceChanged = True
-
 		return self
 
 	def getShiftToSpace(self, n):
@@ -90,7 +85,7 @@ class Paragraph(AbstractDrawable):
 		if n < 0:
 			shift = ([-1] + ([m.start() for m in re.finditer(u'[^(а-яА-Яa-zA-ZёЁ)]', self.getTextBeforePointer()[:-1]) ]))[-1] - len(self.getTextBeforePointer()) + 1
 
-		return shift
+		return shift if shift else n
 
 	def getTextLen(self):
 		return len(self.getText()) + 1 # + 1 for eol
@@ -100,7 +95,7 @@ class Paragraph(AbstractDrawable):
 
 	def setText(self, value):
 		self.text = value
-		self.surfaceChanged = True
+		self.recalcSurfaceBacursively()
 		
 	# bitmap operations
 
@@ -121,14 +116,11 @@ class Paragraph(AbstractDrawable):
 		return rowList if len(rowList) > 0 else ['']
 
 	@overrides(AbstractDrawable)
-	def drawOn(self, surface, pos=[0,0]):
-		surface.blit(self.getBitmap(), pos)
-
-	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		self.setWidth(self.getParentTextfield().size()[0])
 
-	def getBitmap(self, rowIdx=0):
+	@overrides(AbstractDrawable)
+	def getSurface(self, rowIdx=0):
 		self.recalcBitmap()
 		surface = pygame.Surface([
 				self.surface.get_width(), 
@@ -142,10 +134,12 @@ class Paragraph(AbstractDrawable):
 		surface = pygame.Surface([
 				self.getWidth(),
 				len(self.getRowList()) * Constants.CHAR_HEIGHT])
-		surface.fill([255,255,255])
+		surface.fill(self.getParentTextfield().getTextBgColor())
 		i = 0
 		for row in self.getRowList():
-			label = Constants.PROJECT_FONT.render(row, 1, [0,0,0], [255,255,255])
+			label = Constants.PROJECT_FONT.render(row, 1, 
+					self.getParentTextfield().getTextColor(), 
+					self.getParentTextfield().getTextBgColor())
 			surface.blit(label, [0, i * Constants.CHAR_HEIGHT])
 			i += 1
 		

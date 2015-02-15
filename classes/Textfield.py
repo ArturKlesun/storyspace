@@ -16,15 +16,20 @@ class Textfield(AbstractTextfield):
 	scrollPos = 0
 
 	textfieldBitmap = pygame.Surface([1, 1])
+
+	textColor = [255,255,255]
+	textBgColor = [255,255,255]
 	
 	def __init__(self, parentBlock):
-		super(Textfield, self).__init__()
+		super(Textfield, self).__init__(parentBlock)
 
-		self.parentBlock = parentBlock
 		self.recalcSize()
 		
 		self.paragraphList = [Paragraph(self, '')]
 		self.scrollPos = 0
+
+		self.setTextColor([0,0,0])
+		self.setTextBgColor([255,255,255])
 
 	def __str__(self):
 		return '\n\t' + 'Textfield: ' + str(self.getParagraphList())
@@ -47,7 +52,6 @@ class Textfield(AbstractTextfield):
 			self.getCurPar().append(appendToLast)
 
 		self.movePointer(substrLen)
-		self.surfaceChanged = True
 
 	def deleteFromText(self, n):
 		if n < 0:
@@ -67,11 +71,13 @@ class Textfield(AbstractTextfield):
 				n -= self.getCurPar().getTextLen()
 				self.paragraphList.pop(self.pointerParagraph)
 			self.getCurPar().crop(n, -1).prepend(prependToLast)
-		self.surfaceChanged = True
 
 
 	def getParagraphList(self):
 		return self.paragraphList
+
+	def getParagraphTextList(self):
+		return map(lambda par: par.getText(), self.getParagraphList())
 	
 	def getCurPar(self):
 		':rtype Paragraph'
@@ -90,7 +96,7 @@ class Textfield(AbstractTextfield):
 		
 		self.getCurPar().setPointerPos(pointerPos)
 		self.moveScrollToPointer()
-		self.surfaceChanged = True
+		self.recalcSurfaceBacursively()
 
 	def ctrlMovePointer(self, n):
 		self.movePointer(self.getCurPar().getShiftToSpace(n))
@@ -104,12 +110,10 @@ class Textfield(AbstractTextfield):
 				self.movePointer(self.getCharInRowCount())
 			elif self.getCurPar().getPointerRowIdx() < len(self.getCurPar().getRowList()) - 1:
 				self.getCurPar().setPointerPos(self.getCurPar().getTextLen() - 1)
-				self.surfaceChanged = True
 			else:
 				pointerShift = self.getPointerRowAndCol()[1]
 				self.movePar(1)
 				self.getCurPar().setPointerPos(pointerShift)
-				self.surfaceChanged = True
 		for i in range(rowCount, 0):
 			if len(self.getCurPar().getTextBeforePointer()) >= self.getCharInRowCount():
 				self.movePointer(-self.getCharInRowCount())
@@ -117,13 +121,12 @@ class Textfield(AbstractTextfield):
 				pointerShift = self.getPointerRowAndCol()[1]
 				self.movePar(-1)				
 				self.getCurPar().setPointerPos( (len(self.getCurPar().getRowList()) - 1) * self.getCharInRowCount() + pointerShift )
-				self.surfaceChanged = True
 		self.moveScrollToPointer()
+		self.recalcSurfaceBacursively()
 
 
 	def movePar(self, n):
 		self.setPointerPar(self.pointerParagraph + n)
-		self.surfaceChanged = True
 
 	def getPointerRowAndCol(self):
 		resultRow = 0
@@ -157,9 +160,21 @@ class Textfield(AbstractTextfield):
 		self.scrollPos = value
 		if self.scrollPos < 0: self.scrollPos = 0
 		if self.scrollPos >= self.getFullRowCount(): self.scrollPos = self.getFullRowCount() - 1
-		self.surfaceChanged = True
+		self.recalcSurfaceBacursively()
 
 	# operations with bitmap
+
+	def setTextColor(self, value):
+		self.textColor = value
+
+	def getTextColor(self):
+		return self.textColor 
+
+	def setTextBgColor(self, value):
+		self.textBgColor = value
+
+	def getTextBgColor(self):
+		return self.textBgColor 
 
 	def getParIdxAndRowIdxToPrintFrom(self):
 		scrollPos = self.scrollPos
@@ -177,7 +192,6 @@ class Textfield(AbstractTextfield):
 	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		self.size(self.getParentBlock().calcTextfieldSize())
-		self.surfaceChanged = True
 
 	def getFullRowCount(self): # TODO: may be wrong
 		return len(self.getFullRowList())
@@ -194,30 +208,30 @@ class Textfield(AbstractTextfield):
 	def getCharInRowCount(self):
 		return self.getWidth() / Constants.CHAR_WIDTH
 
-	def getTextfieldBitmap(self):
+	@overrides(AbstractDrawable)
+	def getSurface(self):
 		if self.surfaceChanged:
-			self.textfieldBitmap = self.calcTextfieldBitmap()
+			self.calcTextfieldBitmap()
 			self.surfaceChanged = False
 		
-		return self.textfieldBitmap
+		return self.surface
 
 	def calcTextfieldBitmap(self):
 
-		contentSurface = pygame.Surface(self.size())
-		contentSurface.fill([255,255,255])
+		self.surface = pygame.Surface(self.size())
+		self.surface.fill([255,255,255])
 
 		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
 		
 		y = - rowIdx * Constants.CHAR_HEIGHT
 		while (y < self.getHeight() and parIdx < len(self.getParagraphList())):
 			bitmapHeight = len(self.paragraphList[parIdx].getRowList()) * Constants.CHAR_HEIGHT
-			self.paragraphList[parIdx].drawOn(contentSurface, [0,y])
+			self.paragraphList[parIdx].setTop(y)
+			self.paragraphList[parIdx].drawOnParent()
 			y += bitmapHeight
 			parIdx += 1
 
-		self.drawPointerOn(contentSurface)
-
-		return contentSurface
+		self.drawPointerOn(self.surface)
 
 	def drawPointerOn(self, surface):
 		# TODO: encapsulate into Paragraph
@@ -232,8 +246,8 @@ class Textfield(AbstractTextfield):
 
 	def getParentBlock(self):
 		':rtype Block'
-		return self.parentBlock
+		return self.getParent()
 	
 	def setParentBlock(self, value):
-		self.parentBlock = value
+		self.setParent(value)
 	

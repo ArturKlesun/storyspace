@@ -1,12 +1,9 @@
 from classes.Fp import overrides
 from classes.AbstractBlock import AbstractBlock
 from classes.NullTextfield import NullTextfield
+from classes.AbstractDrawable import AbstractDrawable
 
 class NullBlock(AbstractBlock):
-
-	@overrides(AbstractBlock)
-	def __init__(self):
-		pass
 
 	@overrides(AbstractBlock)
 	def isResizeCornerPointed(self):
@@ -23,3 +20,13 @@ class NullBlock(AbstractBlock):
 	@overrides(AbstractBlock)
 	def getChildTextfield(self):
 		return NullTextfield()
+
+	def getFocusedInput(self):
+		return self.getChildTextfield()
+
+	@overrides(AbstractDrawable)
+	def recalcSize(self):
+		pass
+	
+	def drawOnParent(self, shiftVector=[0,0]):
+		pass

@@ -1,68 +1,102 @@
 from classes.Fp import *
 from classes.Constants import Constants
 from abc import abstractmethod
+from pygame.surface import Surface
+import classes
 
 class AbstractDrawable(object):
 
-    width = 0
-    height = 0
-    left = 0
-    top = 0
+	width = 0
+	height = 0
+	left = 0
+	top = 0
+	
+	surface = None
+	surfaceChanged = True
+	
+	def __init__(self, parent):
+		self.width = 0
+		self.height = 0
+		self.left = 0
+		self.top = 0
+		
+		self.setParent(parent)
+		self.surfaceChanged = True
 
-    surface = None
-    surfaceChanged = True
+		if not self.getParent() is None: self.getParent().childList.append(self)
+		self.childList = []
+	
+	def drawOnParent(self, shiftVector=[0,0]):
+		self.getParent().surface.blit(self.getSurface(), vectorSum(self.pos(), minusVector(shiftVector)))
 
-    def __init__(self):
-        self.width = 0
-        self.height = 0
-        self.left = 0
-        self.top = 0
+	@abstractmethod
+	def recalcSize(self):
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+	
+	@abstractmethod
+	def getSurface(self):
+		# TODO: it should not be abstract
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
-        self.surfaceChanged = True
+	@abstractmethod
+	def calcSurface(self):
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+	
+	def isPointed(self, pointerPos):
+		return isPointInRect(pointerPos, (self.left, self.top, self.width, self.height))
+	
+	def sizeAddVector(self, vector):
+		self.size( vectorSum(self.size(), vector) )
 
-        self.childList = []
+	def posAddVector(self, vector):
+		self.pos( vectorSum(self.pos(), vector) )
+	
+	def size(self, value = None):
+		if value != None:
+			self.width = max(value[0], Constants.CHAR_WIDTH)
+			self.height = max(value[1], Constants.CHAR_HEIGHT)
+			
+			for child in self.childList:
+				child.recalcSize()
+		return self.width, self.height
+	
+	def recalcSurfaceRecursively(self, n=0):
+		self.surfaceChanged = True
+		if n == 0: return
+		for child in self.childList:
+			child.recalcSurfaceRecursively(n - 1)
+	
+	def recalcSurfaceBacursively(self):
+		self.surfaceChanged = True
+		if not isinstance(self.getParent(), classes.Screen.Screen): 
+			self.getParent().recalcSurfaceBacursively()
 
-    @abstractmethod
-    def drawOn(self, surface, pos=[0,0]):
-        raise NotImplementedError("Please Implement this method")
+	def pos(self, value = None):
+		if value:
+			self.left = value[0]
+			self.top = value[1]
+		return self.left, self.top
+	
+	def getParent(self):
+		return self.parent;
+	
+	def setParent(self, value):
+		self.parent = value
+	
+	def getWidth(self):
+		return self.size()[0]
+	
+	def setWidth(self, value):
+		self.width = value
+	
+	def setTop(self, value):
+		self.top = value
+	
+	def setLeft(self, value):
+		self.left = value
+	
+	def getHeight(self):
+		return self.size()[1]
 
-    @abstractmethod
-    def recalcSize(self):
-        raise NotImplementedError("Please Implement this method")
-    
-    @abstractmethod
-    def getBitmap(self):
-        raise NotImplementedError("Please Implement this method")
-
-    def isPointed(self, pointerPos):
-        return isPointInRect(pointerPos, (self.left, self.top, self.width, self.height))
-
-    def sizeAddVector(self, vector):
-        self.size( vectorSum(self.size(), vector) )
-
-    def posAddVector(self, vector):
-        self.pos( vectorSum(self.pos(), vector) )
-
-    def size(self, value = None):
-        if value != None:
-            self.width = max(value[0], Constants.CHAR_WIDTH)
-            self.height = max(value[1], Constants.CHAR_HEIGHT)
-
-            for child in self.childList:
-                child.recalcSize()
-        return self.width, self.height
-            
-    def pos(self, value = None):
-        if value:
-            self.left = value[0]
-            self.top = value[1]
-        return self.left, self.top
-
-    def getWidth(self):
-        return self.size()[0]
-
-    def setWidth(self, value):
-        self.width = value
-
-    def getHeight(self):
-        return self.size()[1]
+	def getRect(self):
+		return self.pos()[0], self.pos()[1], self.size()[0], self.size()[1]
