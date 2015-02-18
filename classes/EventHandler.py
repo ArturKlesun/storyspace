@@ -36,6 +36,7 @@ class EventHandler(object):
 			elif event.type == pygame.MOUSEBUTTONUP:
 				if EventHandler.IS_RESIZING:
 					Block.FOCUSED_BLOCK.recalcSurfaceRecursively(-1)
+					EventHandler.IS_RESIZING = False
 
 				if event.button == 4: # scroll-up
 					Block.FOCUSED_BLOCK.getFocusedInput().scroll(-EventHandler.MOUSE_SCROLL_STEP_SIZE)
@@ -53,7 +54,7 @@ class EventHandler(object):
 					else:
 						Block.FOCUSED_BLOCK.posAddVector( displaceVector )
 
-				if event.buttons[1]: # middle mouse button hold
+				if event.buttons[1] or event.buttons[2]: # middle mouse button hold
 					Screen.getInstance().moveCam( vectorReverse(displaceVector) );
 
 				Screen.CUR_MOUSE_POS = event.pos
@@ -122,7 +123,7 @@ class EventHandler(object):
 					block.size(block.size())
 					block.recalcSurfaceRecursively(1)
 
-			elif event.key == pygame.K_PLUS:
+			elif event.key == pygame.K_EQUALS:
 				Screen.getInstance().scale(+1)
 			elif event.key == pygame.K_MINUS:
 				Screen.getInstance().scale(-1)

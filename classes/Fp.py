@@ -5,7 +5,7 @@ def vectorSum(a, b):
 	return a[0] + b[0], a[1] + b[1]
 
 def vectorMult(a, koef):
-	return a[0] * koef, a[1] * koef
+	return int(a[0] * koef), int(a[1] * koef)
 
 def vectorReverse(vector):
 	return vectorDiff([0,0], vector)

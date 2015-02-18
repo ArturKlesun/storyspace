@@ -1,14 +1,15 @@
 import pygame
 from pygame.constants import *
 from classes.AbstractDrawable import AbstractDrawable
-from classes.Fp import getVectorFromRectToPoint, isRectInRect, vectorSum
+from classes.Fp import getVectorFromRectToPoint, isRectInRect, vectorSum,\
+	vectorMult
 import classes
 from classes.Constants import Constants
 
 class Screen(AbstractDrawable):
 
-	CAM_INDENT_WIDTH = 10
-	CAM_STEP_PER_FRAME = 5
+	CAM_INDENT_WIDTH = 30
+	CAM_STEP_PER_FRAME = 25
 	SCALE_CHANGE_STEP = 0.5
 
 	CUR_MOUSE_POS = [0,0]
@@ -95,10 +96,10 @@ class Screen(AbstractDrawable):
 
 	def getBlockInFrameList(self):
 		# TODO: "in frame"
-		return [block for block in self.getChildBlockList() if isinstance(block, classes.Block.Block)]
+		return self.getChildBlockList()
 
 	def getChildBlockList(self):
-		return self.childList
+		return [block for block in self.childList if isinstance(block, classes.Block.Block)]
 
 	def clearBlockList(self):
 		del self.childList[:]

@@ -58,7 +58,7 @@ class Block(AbstractBlock):
 			self.surface = frameSurface
 			self.surfaceChanged = False
 
-		if self.isResizeCornerPointed() and self.isPointed(classes.Screen.Screen.CUR_MOUSE_POS):
+		if self.isResizeCornerPointed() and self.isPointed(classes.Screen.Screen.getInstance().calcMouseAbsolutePos()):
 			pygame.draw.circle(self.surface, [0,0,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
 		else:
 			pygame.draw.circle(self.surface, [255,255,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)

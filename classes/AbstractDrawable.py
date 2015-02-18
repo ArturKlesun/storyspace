@@ -27,7 +27,7 @@ class AbstractDrawable(object):
 		self.childList = []
 	
 	def drawOnParent(self, shiftVector=[0,0]):
-		self.getParent().surface.blit(self.getSurface(), vectorMult( vectorSum(self.pos(), vectorReverse(shiftVector)), classes.Screen.Screen.getInstance().scaleKoef )) # TODO: stopped here
+		self.getParent().surface.blit(self.getSurface(), vectorSum(self.pos(), vectorReverse(shiftVector)))
 
 	@abstractmethod
 	def recalcSize(self):
