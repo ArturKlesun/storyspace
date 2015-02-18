@@ -1,11 +1,14 @@
 def vectorDiff(a, b):
-	return (a[0] - b[0], a[1] - b[1])
+	return a[0] - b[0], a[1] - b[1]
 
 def vectorSum(a, b):
-	return (a[0] + b[0], a[1] + b[1])
+	return a[0] + b[0], a[1] + b[1]
 
-def minusVector(vector):
-	return -vector[0], -vector[1]
+def vectorMult(a, koef):
+	return a[0] * koef, a[1] * koef
+
+def vectorReverse(vector):
+	return vectorDiff([0,0], vector)
 
 def isPointInRect(p, r):
 	return p[0] > r[0] and p[1] > r[1] and p[0] < r[0] + r[2] and p[1] < r[1] + r[3]
@@ -18,7 +21,7 @@ def distanceBetween(point1, point2):
 	return (dif[0]**2 + dif[1]**2)**(0.5)
 
 def split(someList, pos):
-	return (someList[:pos], someList[pos:])
+	return someList[:pos], someList[pos:]
 
 def getVectorFromRectToPoint(rect, point):
 	vector = [0,0]
