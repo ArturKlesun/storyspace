@@ -17,19 +17,23 @@ class Block(AbstractBlock):
 	DISPLAY_STATUS_BAR = False
 	FOCUSED_BLOCK = NullBlock(Screen.getInstance()) # AbstractBlock
 
+	DEFAULT_SIZE = [200,200]
+	DEFAULT_POS = [50,50]
+	DEFAULT_STATUS_STRING = u'{"Имя": "Ираклий", "Оценка": "0", "Кратко": "гузно", "Каммент": "ВсёХуйняДавайСначала"}'
+
 	rate = 0
 
 	def __init__(self, blockData=None):
 		super(Block, self).__init__(Screen.getInstance())
-		self.size([200,200])
-		self.pos([50,50])
+		self.size(Block.DEFAULT_SIZE)
+		self.pos(Block.DEFAULT_POS)
 		
 		self.childTextfield = Textfield(self)
 		self.childStatusInput = Textfield(self) # TODO: create separate class
 		self.getChildStatusInput().setTextBgColor([191,191,191])
 		self.getChildStatusInput().setTextColor([127,63,0])
 
-		if blockData != None:
+		if blockData is not None:
 			self.setObjectState(blockData)
 	
 	def __str__(self):
@@ -54,7 +58,7 @@ class Block(AbstractBlock):
 			self.surface = frameSurface
 			self.surfaceChanged = False
 
-		if (self.isResizeCornerPointed() and self.isPointed(classes.Screen.Screen.CUR_MOUSE_POS)):
+		if self.isResizeCornerPointed() and self.isPointed(classes.Screen.Screen.CUR_MOUSE_POS):
 			pygame.draw.circle(self.surface, [0,0,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
 		else:
 			pygame.draw.circle(self.surface, [255,255,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
@@ -105,7 +109,6 @@ class Block(AbstractBlock):
 			self.getHeight() - self.getTextfieldTopIndent() - Constants.BLOCK_FRAME_WIDTH)
 
 	def getTextfieldTopIndent(self):
-		# TODO: if show statusbar
 		return Constants.BLOCK_FRAME_WIDTH + (Block.STATUS_BAR_HEIGHT if Block.DISPLAY_STATUS_BAR else 0)
 
 	def getTextfieldRightIndent(self):
@@ -118,12 +121,12 @@ class Block(AbstractBlock):
 				'paragraphTextList': self.getChildTextfield().getParagraphTextList()}
 
 	def setObjectState(self, fileData):
-		self.pos(fileData['pos'])
-		self.size(fileData['size'])
-		self.rate = fileData['rate']
+		self.pos(fileData['pos'] if 'pos' in fileData else Block.DEFAULT_POS)
+		self.size(fileData['size'] if 'size' in fileData else Block.DEFAULT_SIZE)
+		self.rate = fileData['rate'] if 'rate' in fileData else -1
 		for parText in (fileData['paragraphTextList'] if 'paragraphTextList' in fileData else []):
 			self.getChildTextfield().insertIntoText(parText + '\n')
-		for parText in (fileData['statusString'] if 'statusString' in fileData else []):
+		for parText in (fileData['statusString'] if 'statusString' in fileData else [Block.DEFAULT_STATUS_STRING]):
 			self.getChildStatusInput().insertIntoText(parText + '\n')
 			
 		self.getChildTextfield().setPointerPar(0)

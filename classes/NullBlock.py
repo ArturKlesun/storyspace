@@ -5,17 +5,13 @@ from classes.AbstractDrawable import AbstractDrawable
 
 class NullBlock(AbstractBlock):
 
+	@overrides(AbstractDrawable)
+	def calcSurface(self):
+		pass
+
 	@overrides(AbstractBlock)
 	def isResizeCornerPointed(self):
 		return False
-
-	@overrides(AbstractBlock)
-	def sizeAddVector(self, vector):
-		pass
-	
-	@overrides(AbstractBlock)
-	def posAddVector(self, vector):
-		pass
 
 	@overrides(AbstractBlock)
 	def getChildTextfield(self):
@@ -27,6 +23,7 @@ class NullBlock(AbstractBlock):
 	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		pass
-	
+
+	@overrides(AbstractDrawable)
 	def drawOnParent(self, shiftVector=[0,0]):
 		pass

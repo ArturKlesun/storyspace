@@ -5,7 +5,7 @@ import pygame
 import json
 import sys
 from classes.Block import Block
-from classes.Fp import vectorDiff, vectorSum
+from classes.Fp import vectorDiff, vectorSum, vectorReverse
 from classes.Clipboard import Clipboard
 from classes.Screen import Screen
 from pygame.constants import *
@@ -15,7 +15,7 @@ pygame.init()
 class EventHandler(object):
 
 	IS_RESIZING = False
-	IS_MOUSE_DOWN = False
+	MOUSE_SCROLL_STEP_SIZE = 4
 
 	@staticmethod
 	def handlePygame():
@@ -32,22 +32,30 @@ class EventHandler(object):
 							EventHandler.IS_RESIZING = True
 						break
 					Block.releaseFocus()
-				EventHandler.IS_MOUSE_DOWN = True
 
 			elif event.type == pygame.MOUSEBUTTONUP:
-				EventHandler.IS_MOUSE_DOWN = False
 				if EventHandler.IS_RESIZING:
 					Block.FOCUSED_BLOCK.recalcSurfaceRecursively(-1)
-					EventHandler.IS_RESIZING = False
+
+				if event.button == 4: # scroll-up
+					Block.FOCUSED_BLOCK.getFocusedInput().scroll(-EventHandler.MOUSE_SCROLL_STEP_SIZE)
+				elif event.button == 5: #scroll-down
+					Block.FOCUSED_BLOCK.getFocusedInput().scroll(EventHandler.MOUSE_SCROLL_STEP_SIZE)
 
 			elif event.type == pygame.MOUSEMOTION:
-				
-				if EventHandler.IS_MOUSE_DOWN:
+
+				displaceVector = vectorDiff(event.pos, Screen.CUR_MOUSE_POS)
+
+				if event.buttons[0]: # left mouse button hold
 					if EventHandler.IS_RESIZING:
-						Block.FOCUSED_BLOCK.sizeAddVector( vectorDiff(event.pos, Screen.CUR_MOUSE_POS) )
+						Block.FOCUSED_BLOCK.sizeAddVector( displaceVector )
 						Block.FOCUSED_BLOCK.recalcSurfaceRecursively(1)
 					else:
-						Block.FOCUSED_BLOCK.posAddVector( vectorDiff(event.pos, Screen.CUR_MOUSE_POS) )
+						Block.FOCUSED_BLOCK.posAddVector( displaceVector )
+
+				if event.buttons[1]: # middle mouse button hold
+					Screen.getInstance().moveCam( vectorReverse(displaceVector) );
+
 				Screen.CUR_MOUSE_POS = event.pos
 
 			elif event.type==VIDEORESIZE:
@@ -81,7 +89,7 @@ class EventHandler(object):
 				fileObj.close()
 
 			elif event.key == pygame.K_n:
-				block = Block()
+				block = Block({'pos': Screen.getInstance().camPos()}) # TODO: spawn in mouse pos
 				blockList.append(block)
 				block.acquireFocus()
 
@@ -113,6 +121,11 @@ class EventHandler(object):
 				for block in blockList:
 					block.size(block.size())
 					block.recalcSurfaceRecursively(1)
+
+			elif event.key == pygame.K_PLUS:
+				Screen.getInstance().scale(+1)
+			elif event.key == pygame.K_MINUS:
+				Screen.getInstance().scale(-1)
 
 			elif event.key == pygame.K_f:
 				Screen.getInstance().switchFullscreen()
