@@ -3,6 +3,7 @@ from pygame.constants import *
 from classes.AbstractDrawable import AbstractDrawable
 from classes.Fp import getVectorFromRectToPoint, isRectInRect, vectorSum
 import classes
+from classes.Constants import Constants
 
 class Screen(AbstractDrawable):
 
@@ -15,6 +16,8 @@ class Screen(AbstractDrawable):
 	instance = None
 	camLeft = 0
 	camTop = 0
+
+	lastSize = (400,400)
 
 	screen = None
 
@@ -45,15 +48,19 @@ class Screen(AbstractDrawable):
 		self.recalcSurfaceRecursively(1)
 
 	def recalcScreen(self):
-		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|RESIZABLE)
+		
+		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.IS_FULLSCREEN else FULLSCREEN))
 
 	def switchFullscreen(self):
-		if Screen.IS_FULLSCREEN:
-			self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|FULLSCREEN)
-			Screen.IS_FULLSCREEN = True
+
+		if not Screen.IS_FULLSCREEN:
+			self.lastSize = self.size()
+			self.size(Constants.MONITOR_RESOLUTION)
 		else:
-			self.recalcScreen()
-			Screen.IS_FULLSCREEN = False
+			self.size(self.lastSize)
+
+		Screen.IS_FULLSCREEN = not Screen.IS_FULLSCREEN
+		self.recalcScreen()
 
 	def getSurface(self):
 		if self.surfaceChanged:
@@ -61,7 +68,6 @@ class Screen(AbstractDrawable):
 		return self.surface
 
 	def recalcSurface(self):
-		print self.camPos()
 		self.surface.fill([0,0,0])
 		for block in self.childList:
 			if isRectInRect(self.getCamRect(), block.getRect()): 

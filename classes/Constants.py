@@ -1,6 +1,9 @@
 import pygame
 
+
+
 pygame.init()
+infoObject = pygame.display.Info()
 
 class Constants(object):
 
@@ -10,3 +13,5 @@ class Constants(object):
 	RESIZE_CORNER_RADIUS = 10
 	
 	BLOCK_FRAME_WIDTH = 2
+
+	MONITOR_RESOLUTION = (infoObject.current_w, infoObject.current_h)
