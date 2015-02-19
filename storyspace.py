@@ -9,7 +9,7 @@ from classes.Screen import Screen
 from classes.TimerHandler import TimerHandler
 
 blockList = []
-pygame.key.set_repeat(50, 5)
+pygame.key.set_repeat(150, 5)
 
 while 1:
 	EventHandler.handlePygame()
