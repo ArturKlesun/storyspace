@@ -11,8 +11,8 @@ from classes.Constants import Constants
 from classes.AbstractDrawable import AbstractDrawable
 from classes.Screen import Screen
 
-class Block(AbstractBlock):
-	
+class TextBlock(AbstractBlock):
+
 	STATUS_BAR_HEIGHT = Constants.CHAR_HEIGHT
 	DISPLAY_STATUS_BAR = False
 	FOCUSED_BLOCK = NullBlock(Screen.getInstance()) # AbstractBlock
@@ -24,9 +24,9 @@ class Block(AbstractBlock):
 	rate = 0
 
 	def __init__(self, blockData=None):
-		super(Block, self).__init__(Screen.getInstance())
-		self.size(Block.DEFAULT_SIZE)
-		self.pos(Block.DEFAULT_POS)
+		super(TextBlock, self).__init__(Screen.getInstance())
+		self.size(TextBlock.DEFAULT_SIZE)
+		self.pos(TextBlock.DEFAULT_POS)
 		
 		self.childTextfield = Textfield(self)
 		self.childStatusInput = Textfield(self) # TODO: create separate class
@@ -45,7 +45,7 @@ class Block(AbstractBlock):
 	@overrides(AbstractDrawable)
 	def getSurface(self):
 		if self.surfaceChanged:
-			frameColor = [0,255,0] if self == Block.FOCUSED_BLOCK else [127,127,127]
+			frameColor = [0,255,0] if self == TextBlock.FOCUSED_BLOCK else [127,127,127]
 			frameSurface = pygame.Surface([self.width, self.height])
 			frameSurface.fill(frameColor)
 
@@ -67,21 +67,25 @@ class Block(AbstractBlock):
 		return self.surface
 
 	@overrides(AbstractDrawable)
+	def recalcSurface(self):
+		pass
+
+	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		pass
 
 	@staticmethod
 	def releaseFocus():
-		defocused = Block.FOCUSED_BLOCK
-		Block.FOCUSED_BLOCK = NullBlock(Screen.getInstance())
+		defocused = TextBlock.FOCUSED_BLOCK
+		TextBlock.FOCUSED_BLOCK = NullBlock(Screen.getInstance())
 		defocused.recalcSurfaceBacursively()
-		if isinstance(defocused, Block): defocused.getSurface()
+		if isinstance(defocused, TextBlock): defocused.getSurface()
 	
 	def acquireFocus(self):
-		defocused = Block.FOCUSED_BLOCK 
-		Block.FOCUSED_BLOCK = self
+		defocused = TextBlock.FOCUSED_BLOCK
+		TextBlock.FOCUSED_BLOCK = self
 		defocused.recalcSurfaceBacursively()
-		if isinstance(defocused, Block): defocused.getSurface()
+		if isinstance(defocused, TextBlock): defocused.getSurface()
 		self.recalcSurfaceBacursively()
 
 	# abstract block methods
@@ -98,7 +102,7 @@ class Block(AbstractBlock):
 		return self.childStatusInput
 
 	def getFocusedInput(self):
-		return self.getChildStatusInput() if Block.DISPLAY_STATUS_BAR else self.getChildTextfield()
+		return self.getChildStatusInput() if TextBlock.DISPLAY_STATUS_BAR else self.getChildTextfield()
 
 	@overrides(AbstractBlock)
 	def getChildTextfield(self):
@@ -109,7 +113,7 @@ class Block(AbstractBlock):
 			self.getHeight() - self.getTextfieldTopIndent() - Constants.BLOCK_FRAME_WIDTH)
 
 	def getTextfieldTopIndent(self):
-		return Constants.BLOCK_FRAME_WIDTH + (Block.STATUS_BAR_HEIGHT if Block.DISPLAY_STATUS_BAR else 0)
+		return Constants.BLOCK_FRAME_WIDTH + (TextBlock.STATUS_BAR_HEIGHT if TextBlock.DISPLAY_STATUS_BAR else 0)
 
 	def getTextfieldRightIndent(self):
 		# TODO: if scrollbar + scrollbar
@@ -121,12 +125,12 @@ class Block(AbstractBlock):
 				'paragraphTextList': self.getChildTextfield().getParagraphTextList()}
 
 	def setObjectState(self, fileData):
-		self.pos(fileData['pos'] if 'pos' in fileData else Block.DEFAULT_POS)
-		self.size(fileData['size'] if 'size' in fileData else Block.DEFAULT_SIZE)
+		self.pos(fileData['pos'] if 'pos' in fileData else TextBlock.DEFAULT_POS)
+		self.size(fileData['size'] if 'size' in fileData else TextBlock.DEFAULT_SIZE)
 		self.rate = fileData['rate'] if 'rate' in fileData else -1
 		for parText in (fileData['paragraphTextList'] if 'paragraphTextList' in fileData else []):
 			self.getChildTextfield().insertIntoText(parText + '\n')
-		for parText in (fileData['statusString'] if 'statusString' in fileData else [Block.DEFAULT_STATUS_STRING]):
+		for parText in (fileData['statusString'] if 'statusString' in fileData else [TextBlock.DEFAULT_STATUS_STRING]):
 			self.getChildStatusInput().insertIntoText(parText + '\n')
 			
 		self.getChildTextfield().setPointerPar(0)

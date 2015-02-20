@@ -39,7 +39,7 @@ class AbstractDrawable(object):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
 	@abstractmethod
-	def calcSurface(self):
+	def recalcSurface(self):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 	
 	def isPointed(self, pointerPos):

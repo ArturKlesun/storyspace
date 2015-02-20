@@ -211,12 +211,12 @@ class Textfield(AbstractTextfield):
 	@overrides(AbstractDrawable)
 	def getSurface(self):
 		if self.surfaceChanged:
-			self.calcTextfieldBitmap()
+			self.recalcSurface()
 			self.surfaceChanged = False
 		
 		return self.surface
 
-	def calcTextfieldBitmap(self):
+	def recalcSurface(self):
 
 		self.surface = pygame.Surface(self.size())
 		self.surface.fill([255,255,255])

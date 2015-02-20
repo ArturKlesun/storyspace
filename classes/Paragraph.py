@@ -121,13 +121,14 @@ class Paragraph(AbstractDrawable):
 
 	@overrides(AbstractDrawable)
 	def getSurface(self, rowIdx=0):
-		self.recalcBitmap()
+		# TODO: make it like in all other drawables, so i could move this method implementation into abstract class
+		self.recalcSurface()
 		surface = pygame.Surface([
 				self.surface.get_width(), 
 				self.surface.get_height() - rowIdx * Constants.CHAR_HEIGHT])
 		surface.fill([255,255,255])
 		surface.blit(self.surface, [0, -rowIdx * Constants.CHAR_HEIGHT])
-		pygame.draw.line(surface, [255,191,191], [0, 0], [surface.get_width(), 0])
+		pygame.draw.line(surface, [255,240,240], [0, 0], [surface.get_width(), 0])
 		return surface
 
 	def genBitmap(self):
@@ -137,15 +138,16 @@ class Paragraph(AbstractDrawable):
 		surface.fill(self.getParentTextfield().getTextBgColor())
 		i = 0
 		for row in self.getRowList():
-			label = Constants.PROJECT_FONT.render(row, 1, 
-					self.getParentTextfield().getTextColor(), 
+			label = Constants.PROJECT_FONT.render(row, 1,
+					self.getParentTextfield().getTextColor(),
 					self.getParentTextfield().getTextBgColor())
 			surface.blit(label, [0, i * Constants.CHAR_HEIGHT])
 			i += 1
 		
 		return surface
 
-	def recalcBitmap(self):
+	@overrides(AbstractDrawable)
+	def recalcSurface(self):
 		self.getRowList()
 
 	def getRowList(self):

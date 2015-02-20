@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pygame
-from classes.Block import Block
+from classes.TextBlock import TextBlock
 from classes.EventHandler import EventHandler
 from pygame.constants import *
 from classes.Screen import Screen

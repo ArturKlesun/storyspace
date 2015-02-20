@@ -13,4 +13,5 @@ class AbstractBlock(AbstractDrawable):
 
 	@abstractmethod
 	def getChildTextfield(self):
+		# TODO: it is specific for default block - remove from here
 		raise NotImplementedError("Please Implement this method")

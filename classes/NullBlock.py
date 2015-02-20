@@ -6,7 +6,11 @@ from classes.AbstractDrawable import AbstractDrawable
 class NullBlock(AbstractBlock):
 
 	@overrides(AbstractDrawable)
-	def calcSurface(self):
+	def getSurface(self):
+		pass
+
+	@overrides(AbstractDrawable)
+	def recalcSurface(self):
 		pass
 
 	@overrides(AbstractBlock)

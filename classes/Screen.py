@@ -2,7 +2,7 @@ import pygame
 from pygame.constants import *
 from classes.AbstractDrawable import AbstractDrawable
 from classes.Fp import getVectorFromRectToPoint, isRectInRect, vectorSum,\
-	vectorMult
+	vectorMult, overrides
 import classes
 from classes.Constants import Constants
 
@@ -34,7 +34,7 @@ class Screen(AbstractDrawable):
 		self.camPos([0,0])
 		self.scaleKoef = 1.0
 
-		self.recalcScreen()
+		self.recalcSize()
 
 	@staticmethod
 	def getInstance():
@@ -42,10 +42,6 @@ class Screen(AbstractDrawable):
 		if Screen.instance is None:
 			Screen.instance = Screen()
 		return Screen.instance
-
-	def recalcScreen(self):
-		
-		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.IS_FULLSCREEN else FULLSCREEN))
 
 	def switchFullscreen(self):
 
@@ -56,19 +52,25 @@ class Screen(AbstractDrawable):
 			self.size(self.lastSize)
 
 		Screen.IS_FULLSCREEN = not Screen.IS_FULLSCREEN
-		self.recalcScreen()
+		self.recalcSize()
 
+	@overrides(AbstractDrawable)
 	def getSurface(self):
 		if self.surfaceChanged:
 			self.recalcSurface()
 		return self.surface
 
+	@overrides(AbstractDrawable)
 	def recalcSurface(self):
 		self.surface.fill([0,0,0])
 		for block in self.childList:
 			if isRectInRect(self.getCamRect(), block.getRect()):
 				# TODO: scaling is alfa now
 				block.drawOnParent(self.camPos())
+
+	@overrides(AbstractDrawable)
+	def recalcSize(self):
+		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.IS_FULLSCREEN else FULLSCREEN))
 
 	def calcMouseAbsolutePos(self):
 		return vectorSum(Screen.CUR_MOUSE_POS, self.camPos())
@@ -99,7 +101,7 @@ class Screen(AbstractDrawable):
 		return self.getChildBlockList()
 
 	def getChildBlockList(self):
-		return [block for block in self.childList if isinstance(block, classes.Block.Block)]
+		return [block for block in self.childList if not isinstance(block, classes.NullBlock.NullBlock)]
 
 	def clearBlockList(self):
 		del self.childList[:]

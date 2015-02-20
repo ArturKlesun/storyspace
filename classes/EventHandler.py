@@ -4,7 +4,7 @@
 import pygame
 import json
 import sys
-from classes.Block import Block
+from classes.TextBlock import TextBlock
 from classes.Fp import vectorDiff, vectorSum, vectorReverse
 from classes.Clipboard import Clipboard
 from classes.Screen import Screen
@@ -31,17 +31,17 @@ class EventHandler(object):
 						if block.isResizeCornerPointed():
 							EventHandler.IS_RESIZING = True
 						break
-					Block.releaseFocus()
+					TextBlock.releaseFocus()
 
 			elif event.type == pygame.MOUSEBUTTONUP:
 				if EventHandler.IS_RESIZING:
-					Block.FOCUSED_BLOCK.recalcSurfaceRecursively(-1)
+					TextBlock.FOCUSED_BLOCK.recalcSurfaceRecursively(-1)
 					EventHandler.IS_RESIZING = False
 
 				if event.button == 4: # scroll-up
-					Block.FOCUSED_BLOCK.getFocusedInput().scroll(-EventHandler.MOUSE_SCROLL_STEP_SIZE)
+					TextBlock.FOCUSED_BLOCK.getFocusedInput().scroll(-EventHandler.MOUSE_SCROLL_STEP_SIZE)
 				elif event.button == 5: #scroll-down
-					Block.FOCUSED_BLOCK.getFocusedInput().scroll(EventHandler.MOUSE_SCROLL_STEP_SIZE)
+					TextBlock.FOCUSED_BLOCK.getFocusedInput().scroll(EventHandler.MOUSE_SCROLL_STEP_SIZE)
 
 			elif event.type == pygame.MOUSEMOTION:
 
@@ -49,10 +49,10 @@ class EventHandler(object):
 
 				if event.buttons[0]: # left mouse button hold
 					if EventHandler.IS_RESIZING:
-						Block.FOCUSED_BLOCK.sizeAddVector( displaceVector )
-						Block.FOCUSED_BLOCK.recalcSurfaceRecursively(1)
+						TextBlock.FOCUSED_BLOCK.sizeAddVector( displaceVector )
+						TextBlock.FOCUSED_BLOCK.recalcSurfaceRecursively(1)
 					else:
-						Block.FOCUSED_BLOCK.posAddVector( displaceVector )
+						TextBlock.FOCUSED_BLOCK.posAddVector( displaceVector )
 
 				if event.buttons[1] or event.buttons[2]: # middle mouse button hold
 					Screen.getInstance().moveCam( vectorReverse(displaceVector) );
@@ -61,7 +61,7 @@ class EventHandler(object):
 
 			elif event.type==VIDEORESIZE:
 				Screen.getInstance().size(event.dict['size'])
-				Screen.getInstance().recalcScreen()
+				Screen.getInstance().recalcSize()
 			
 			elif event.type == pygame.QUIT:
 				sys.exit()
@@ -86,39 +86,39 @@ class EventHandler(object):
 				fileContent = json.loads(fileObj.read())
 				Screen.getInstance().clearBlockList()
 				for blockData in fileContent:
-					blockList.append(Block(blockData))
+					blockList.append(TextBlock(blockData))
 				fileObj.close()
 
 			elif event.key == pygame.K_n:
-				block = Block({'pos': Screen.getInstance().camPos()}) # TODO: spawn in mouse pos
+				block = TextBlock({'pos': Screen.getInstance().camPos()}) # TODO: spawn in mouse pos
 				blockList.append(block)
 				block.acquireFocus()
 
 			elif event.key == pygame.K_c:
 				Clipboard.add('huj')
 			elif event.key == pygame.K_v:
-				Block.FOCUSED_BLOCK.getFocusedInput().insertIntoText(Clipboard.get())
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().insertIntoText(Clipboard.get())
 
 			elif event.key == pygame.K_UP:
-				Block.FOCUSED_BLOCK.getFocusedInput().scroll(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().scroll(-1)
 			elif event.key == pygame.K_DOWN:
-				Block.FOCUSED_BLOCK.getFocusedInput().scroll(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().scroll(1)
 			
 			elif event.key == pygame.K_i:
 				print blockList
 
 			elif event.key == pygame.K_LEFT:
-				Block.FOCUSED_BLOCK.getFocusedInput().ctrlMovePointer(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().ctrlMovePointer(-1)
 			elif event.key == pygame.K_RIGHT:
-				Block.FOCUSED_BLOCK.getFocusedInput().ctrlMovePointer(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().ctrlMovePointer(1)
 
 			elif event.key == pygame.K_BACKSPACE:
-				Block.FOCUSED_BLOCK.getFocusedInput().ctrlDeleteFromText(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().ctrlDeleteFromText(-1)
 			elif event.key == pygame.K_DELETE:
-				Block.FOCUSED_BLOCK.getFocusedInput().ctrlDeleteFromText(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().ctrlDeleteFromText(1)
 
 			elif event.key == pygame.K_SLASH:
-				Block.DISPLAY_STATUS_BAR = not Block.DISPLAY_STATUS_BAR
+				TextBlock.DISPLAY_STATUS_BAR = not TextBlock.DISPLAY_STATUS_BAR
 				for block in blockList:
 					block.size(block.size())
 					block.recalcSurfaceRecursively(1)
@@ -134,32 +134,32 @@ class EventHandler(object):
 		elif not bitMask or bitMask == pygame.KMOD_LSHIFT or bitMask == pygame.KMOD_RSHIFT: 
 			
 			if event.key == pygame.K_LEFT:
-				Block.FOCUSED_BLOCK.getFocusedInput().movePointer(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().movePointer(-1)
 				
 			elif event.key == pygame.K_RIGHT:
-				Block.FOCUSED_BLOCK.getFocusedInput().movePointer(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().movePointer(1)
 				
 			elif event.key == pygame.K_DOWN:
-				Block.FOCUSED_BLOCK.getFocusedInput().movePointerInRows(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().movePointerInRows(1)
 				
 			elif event.key == pygame.K_UP:
-				Block.FOCUSED_BLOCK.getFocusedInput().movePointerInRows(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().movePointerInRows(-1)
 			
 			elif event.key == pygame.K_BACKSPACE:
-				Block.FOCUSED_BLOCK.getFocusedInput().deleteFromText(-1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().deleteFromText(-1)
 
 			elif event.key == pygame.K_DELETE:
-				Block.FOCUSED_BLOCK.getFocusedInput().deleteFromText(1)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().deleteFromText(1)
 
 			elif event.key == pygame.K_RETURN:
-				Block.FOCUSED_BLOCK.getFocusedInput().insertIntoText('\n')
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().insertIntoText('\n')
 
 			elif event.key == pygame.K_PAGEUP:
-				textfield = Block.FOCUSED_BLOCK.getFocusedInput()
+				textfield = TextBlock.FOCUSED_BLOCK.getFocusedInput()
 				textfield.movePointerInRows( - textfield.getPrintedRowCount() / 2 )
 			elif event.key == pygame.K_PAGEDOWN:
-				textfield = Block.FOCUSED_BLOCK.getFocusedInput()
+				textfield = TextBlock.FOCUSED_BLOCK.getFocusedInput()
 				textfield.movePointerInRows( textfield.getPrintedRowCount() / 2 )
 
 			elif len(event.unicode):
-				Block.FOCUSED_BLOCK.getFocusedInput().insertIntoText(event.unicode)
+				TextBlock.FOCUSED_BLOCK.getFocusedInput().insertIntoText(event.unicode)
