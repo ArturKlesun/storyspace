@@ -1,10 +1,9 @@
 from classes.Fp import *
 from classes.Constants import Constants
-from abc import abstractmethod
-from pygame.surface import Surface
-import classes
+from abc import abstractmethod, ABCMeta
+import classes as huj
 
-class AbstractDrawable(object):
+class AbstractDrawable(metaclass=ABCMeta):
 
 	width = 0
 	height = 0
@@ -14,7 +13,7 @@ class AbstractDrawable(object):
 	surface = None
 	surfaceChanged = True
 	
-	def __init__(self, parent):
+	def __init__(self, parent, data=None):
 		self.width = 0
 		self.height = 0
 		self.left = 0
@@ -40,6 +39,16 @@ class AbstractDrawable(object):
 
 	@abstractmethod
 	def recalcSurface(self):
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+
+	@abstractmethod
+	def getEventHandler(self):
+		""":rtype: classes.Drawable.AbstractEventHandler"""
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+
+	@abstractmethod
+	def getFocusedChild(self):
+		""":rtype: AbstractDrawable"""
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 	
 	def isPointed(self, pointerPos):
@@ -68,7 +77,7 @@ class AbstractDrawable(object):
 	
 	def recalcSurfaceBacursively(self):
 		self.surfaceChanged = True
-		if not isinstance(self.getParent(), classes.Screen.Screen): 
+		if not isinstance(self.getParent(), huj.Drawable.Screen.Screen.Screen):
 			self.getParent().recalcSurfaceBacursively()
 
 	def pos(self, value = None):

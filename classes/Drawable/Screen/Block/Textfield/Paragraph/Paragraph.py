@@ -5,11 +5,20 @@ import pygame
 from classes.Fp import split, overrides
 from classes.Constants import Constants
 import re
-from classes.AbstractDrawable import AbstractDrawable
+from classes.Drawable.AbstractDrawable import AbstractDrawable
+import classes as huj
 
 class Paragraph(AbstractDrawable):
 
-	text = u''
+	@overrides(AbstractDrawable)
+	def getEventHandler(self):
+		return huj.Drawable.Screen.Block.Textfield.Paragraph.FocusedParagraphEventHandler.FocusedParagraphEventHandler(self)
+
+	@overrides(AbstractDrawable)
+	def getFocusedChild(self) -> AbstractDrawable:
+		return None
+
+	text = ''
 
 	pointerPos = 0
 
@@ -81,9 +90,9 @@ class Paragraph(AbstractDrawable):
 	def getShiftToSpace(self, n):
 		shift = 0
 		if n > 0:
-			shift = ([m.start() for m in re.finditer(u'[^(а-яА-Яa-zA-ZёЁ)]', self.getTextAfterPointer()[1:]) ] + [-1])[0] + 1
+			shift = ([m.start() for m in re.finditer('[^(а-яА-Яa-zA-ZёЁ)]', self.getTextAfterPointer()[1:]) ] + [-1])[0] + 1
 		if n < 0:
-			shift = ([-1] + ([m.start() for m in re.finditer(u'[^(а-яА-Яa-zA-ZёЁ)]', self.getTextBeforePointer()[:-1]) ]))[-1] - len(self.getTextBeforePointer()) + 1
+			shift = ([-1] + ([m.start() for m in re.finditer('[^(а-яА-Яa-zA-ZёЁ)]', self.getTextBeforePointer()[:-1]) ]))[-1] - len(self.getTextBeforePointer()) + 1
 
 		return shift if shift else n
 
@@ -100,10 +109,10 @@ class Paragraph(AbstractDrawable):
 	# bitmap operations
 
 	def getPointerRowIdx(self):
-		return self.getPointerPos() / self.getCharInRowCount()
+		return self.getPointerPos() // self.getCharInRowCount()
 
 	def getCharInRowCount(self):
-		return self.getWidth() / Constants.CHAR_WIDTH	
+		return self.getWidth() // Constants.CHAR_WIDTH
 
 	def calcRowList(self):
 		rowList = []
@@ -128,7 +137,7 @@ class Paragraph(AbstractDrawable):
 				self.surface.get_height() - rowIdx * Constants.CHAR_HEIGHT])
 		surface.fill([255,255,255])
 		surface.blit(self.surface, [0, -rowIdx * Constants.CHAR_HEIGHT])
-		pygame.draw.line(surface, [255,240,240], [0, 0], [surface.get_width(), 0])
+		pygame.draw.line(surface, [255,230,230], [0, 0], [surface.get_width(), 0])
 		return surface
 
 	def genBitmap(self):

@@ -1,20 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pygame
-from classes.TextBlock import TextBlock
-from classes.EventHandler import EventHandler
-from pygame.constants import *
-from classes.Screen import Screen
+from classes.ClassImporter import ClassImporter
+ClassImporter.importAllClasses()
+
+from classes.Config import Config
+from classes.Drawable.Screen.Screen import Screen
 from classes.TimerHandler import TimerHandler
 
-blockList = []
-pygame.key.set_repeat(150, 5)
+
+Config.getInstance()
+eventHandler = Screen.getInstance().getEventHandler()
+timerHandler = TimerHandler(eventHandler)
 
 while 1:
-	EventHandler.handlePygame()
-
-	Screen.getInstance().getSurface()
-	pygame.display.flip()
-
-	TimerHandler.getInstance().handleFrame()
+	timerHandler.handleFrame()

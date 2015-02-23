@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
-from classes.AbstractDrawable import AbstractDrawable
+
+from classes.Drawable.AbstractDrawable import AbstractDrawable
+
 
 class AbstractTextfield(AbstractDrawable):
 	

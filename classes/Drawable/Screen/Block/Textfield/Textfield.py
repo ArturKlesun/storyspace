@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import pygame
-import time
-import operator
-from classes.Paragraph import Paragraph
+
+from classes.Drawable.Screen.Block.Textfield.Paragraph.Paragraph import Paragraph
 from classes.Constants import Constants
 from classes.Fp import overrides
-from classes.AbstractTextfield import AbstractTextfield
-from classes.AbstractDrawable import AbstractDrawable
+from classes.Drawable.Screen.Block.Textfield.AbstractTextfield import AbstractTextfield
+from classes.Drawable.AbstractDrawable import AbstractDrawable
+import classes as huj
+
 
 class Textfield(AbstractTextfield):
 
@@ -53,6 +54,26 @@ class Textfield(AbstractTextfield):
 
 		self.movePointer(substrLen)
 
+	@overrides(AbstractDrawable)
+	def recalcSize(self):
+		self.size(self.getParentBlock().calcTextfieldSize())
+
+	@overrides(AbstractDrawable)
+	def getSurface(self):
+		if self.surfaceChanged:
+			self.recalcSurface()
+			self.surfaceChanged = False
+
+		return self.surface
+
+	@overrides(AbstractDrawable)
+	def getFocusedChild(self) -> Paragraph:
+		return self.getCurPar()
+
+	@overrides(AbstractDrawable)
+	def getEventHandler(self):
+		return huj.Drawable.Screen.Block.Textfield.FocusedInputEventHandler.FocusedInputEventHandler(self)
+
 	def deleteFromText(self, n):
 		if n < 0:
 			appendToFirst = self.getCurPar().getTextAfterPointer()
@@ -87,10 +108,10 @@ class Textfield(AbstractTextfield):
 
 	def movePointer(self, n):
 		pointerPos = self.getCurPar().getPointerPos() + n
-		while pointerPos / self.getCurPar().getTextLen() > 0 and self.pointerParagraph != len(self.paragraphList) - 1:
+		while pointerPos // self.getCurPar().getTextLen() > 0 and self.pointerParagraph != len(self.paragraphList) - 1:
 			pointerPos -= self.getCurPar().getTextLen()
 			self.setPointerPar(self.pointerParagraph + 1)
-		while pointerPos < 0 and self.pointerParagraph > 0:
+		while pointerPos < 0 < self.pointerParagraph:
 			self.setPointerPar(self.pointerParagraph - 1)
 			pointerPos += self.getCurPar().getTextLen()
 		
@@ -189,10 +210,6 @@ class Textfield(AbstractTextfield):
 		
 		return parIdx, rowIdx;
 
-	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		self.size(self.getParentBlock().calcTextfieldSize())
-
 	def getFullRowCount(self): # TODO: may be wrong
 		return len(self.getFullRowList())
 
@@ -203,18 +220,10 @@ class Textfield(AbstractTextfield):
 		return rowList
 
 	def getPrintedRowCount(self):
-		return self.getHeight() / Constants.CHAR_HEIGHT
+		return self.getHeight() // Constants.CHAR_HEIGHT
 
 	def getCharInRowCount(self):
-		return self.getWidth() / Constants.CHAR_WIDTH
-
-	@overrides(AbstractDrawable)
-	def getSurface(self):
-		if self.surfaceChanged:
-			self.recalcSurface()
-			self.surfaceChanged = False
-		
-		return self.surface
+		return self.getWidth() // Constants.CHAR_WIDTH
 
 	def recalcSurface(self):
 
