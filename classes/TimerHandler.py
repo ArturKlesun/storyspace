@@ -17,12 +17,12 @@ class TimerHandler(object):
 	def handleFrame(self):
 		# TODO: in can not handle events quicker than frame delay, like holding backspace. Should handle some ammount of events per frame
 		for event in pygame.event.get():
-			self.screenEventHandler.handlePygameEvent(event)
+			self.screenEventHandler.handlePygameEvent(event, {})
 
 		Screen.getInstance().getSurface()
 		pygame.display.flip()
 
-		if Screen.IS_FULLSCREEN:
+		if Screen.IS_FULLSCREEN: # TODO: move it into FocusedScreenEventHandler
 			borderRect = Screen.getInstance().getCameraBorderRect()
 			if not isPointInRect(Screen.CUR_MOUSE_POS, borderRect):
 				Screen.getInstance().moveCam( getVectorFromRectToPoint(borderRect, Screen.CUR_MOUSE_POS) )

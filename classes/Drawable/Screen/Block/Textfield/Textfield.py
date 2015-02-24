@@ -98,7 +98,7 @@ class Textfield(AbstractTextfield):
 		return self.paragraphList
 
 	def getParagraphTextList(self):
-		return map(lambda par: par.getText(), self.getParagraphList())
+		return [par.getText() for par in self.getParagraphList()]
 	
 	def getCurPar(self):
 		':rtype Paragraph'

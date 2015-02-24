@@ -8,19 +8,24 @@ from pygame.constants import *
 
 from classes.Config import Config
 from classes.Drawable.AbstractEventHandler import AbstractEventHandler
-from classes.Fp import vectorDiff, vectorReverse
+from classes.Drawable.Screen.Screen import Screen
+from classes.Fp import vectorDiff, vectorReverse, overrides
 from classes.Drawable.Screen.Block.TextBlock import TextBlock
 
 
 class FocusedScreenEventHandler(AbstractEventHandler):
 
-	def getScreen(self): # i could specify, that screen is instance of the Screen, but python won't allow to use circular imports. Pidr.
+	def getScreen(self):
 		""":rtype: classes.Drawable.Screen.Screen.Screen"""
 		return self.getContext()
 
-	def handleMouseEvent(self, event):
+	@overrides(AbstractEventHandler)
+	def handleMouseEvent(self, event, paramsFromParent: dict):
+
+		mouseVector = vectorDiff(event.pos, Screen.CUR_MOUSE_POS)
+
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			self.getScreen().CUR_MOUSE_POS = event.pos
+			Screen.CUR_MOUSE_POS = event.pos
 
 			blockList = self.getScreen().getBlockInFrameList()
 			absoluteMousePos = self.getScreen().calcMouseAbsolutePos()
@@ -31,14 +36,15 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 
 		elif event.type == pygame.MOUSEMOTION:
 
-			mouseVector = vectorDiff(event.pos, self.getScreen().CUR_MOUSE_POS)
-
 			if event.buttons[1] or event.buttons[2]: # middle mouse button hold
 				self.getScreen().moveCam( vectorReverse(mouseVector) );
 
-			self.getScreen().CUR_MOUSE_POS = event.pos
+			Screen.CUR_MOUSE_POS = event.pos
 
-	def handleKeydown(self, event):
+		return {'mouseVector': mouseVector}
+
+	@overrides(AbstractEventHandler)
+	def handleKeydown(self, event, paramsFromParent: dict):
 
 		# excluding capslocks, numlocks, etc...
 		bitMask = event.mod & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
@@ -46,9 +52,9 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 		if bitMask & pygame.KMOD_LCTRL:
 
 			if event.key == pygame.K_s:
-				Config.saveToFile()
+				Config.getInstance().saveToFile()
 			elif event.key == pygame.K_o:
-				Config.openFile()
+				self.getScreen().reconstruct(Config.getInstance().readDataFromFile())
 
 			elif event.key == pygame.K_n:
 				block = TextBlock(self.getScreen(), {'pos': self.getScreen().camPos()})
@@ -68,10 +74,15 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 			elif event.key == pygame.K_f:
 				self.getScreen().switchFullscreen()
 
-	def handleSpecificEvent(self, event):
+		return {}
+
+	@overrides(AbstractEventHandler)
+	def handleSpecificEvent(self, event, paramsFromParent: dict):
 		if event.type==VIDEORESIZE:
 			self.getScreen().size(event.dict['size'])
 			self.getScreen().recalcSize()
 
 		elif event.type == pygame.QUIT:
 			sys.exit()
+
+		return {}

@@ -105,7 +105,8 @@ class TextBlock(AbstractBlock):
 	def getObjectState(self):
 		return {'rate': self.rate, 'pos': self.pos(), 'size': self.size(),
 				'statusString': self.getChildStatusInput().getParagraphTextList(),
-				'paragraphTextList': self.getChildTextfield().getParagraphTextList()}
+				'paragraphTextList': self.getChildTextfield().getParagraphTextList(),
+				'blockClass': self.__class__.__name__}
 
 	def setObjectState(self, fileData):
 		self.pos(fileData['pos'] if 'pos' in fileData else TextBlock.DEFAULT_POS)

@@ -31,14 +31,15 @@ class Config(object):
 		self.contentFilePath = self.params['contentFilePath']
 
 	def saveToFile(self):
-		fileObj = open('asd.json', 'w')
+		fileObj = open(self.contentFilePath, 'w')
 		fileContent= [];
-		for block in classes.Drawable.Screen.Screen.getInstance().getChildBlockList():
+		for block in classes.Drawable.Screen.Screen.Screen.getInstance().getChildBlockList():
 			fileContent.append(block.getObjectState())
-		fileObj.write(json.dumps(fileContent, ensure_ascii=False, indent=4).encode('utf8'))
+		fileObj.write(json.dumps(fileContent, ensure_ascii=False, indent=2))
 		fileObj.close()
 
-	def openFile(self):
-		fileObj = open('asd.json', 'r')
-		classes.Drawable.Screen.Screen.getInstance().reconstruct( json.loads(fileObj.read()) )
+	def readDataFromFile(self):
+		fileObj = open(self.contentFilePath, 'r')
+		data = json.loads(fileObj.read())
 		fileObj.close()
+		return data

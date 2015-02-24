@@ -3,6 +3,7 @@ from pygame.event import Event
 from classes.Drawable.AbstractEventHandler import AbstractEventHandler
 from classes.Drawable.Screen.Block.AbstractBlock import AbstractBlock
 from classes.Fp import vectorDiff, overrides
+import classes as huj
 
 
 class FocusedBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
@@ -11,7 +12,7 @@ class FocusedBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
 		return self.getContext() # TODO: it should be passed from parent, not gotten from environment
 
 	@overrides(AbstractEventHandler)
-	def handleMouseEvent(self, event: Event):
+	def handleMouseEvent(self, event: Event, paramsFromParent: dict):
 		if event.type == pygame.MOUSEBUTTONDOWN:
 			if self.getBlock().isResizeCornerPointed(): # TODO: and button is left mouse button
 				self.getBlock().isResizing = True # TODO: getters/setters
@@ -23,17 +24,17 @@ class FocusedBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
 
 		elif event.type == pygame.MOUSEMOTION:
 
-			mouseVector = vectorDiff(event.pos, self.getBlock().getParent().CUR_MOUSE_POS)
-
 			if event.buttons[0]: # left mouse button hold
 				if self.getBlock().isResizing:
-					self.getBlock().sizeAddVector( mouseVector )
+					self.getBlock().sizeAddVector( paramsFromParent['mouseVector'] )
 					self.getBlock().recalcSurfaceRecursively(1)
 				else:
-					self.getBlock().posAddVector( mouseVector )
+					self.getBlock().posAddVector( paramsFromParent['mouseVector'] )
+
+		return {}
 
 	@overrides(AbstractEventHandler)
-	def handleKeydown(self, event: Event):
+	def handleKeydown(self, event: Event, paramsFromParent: dict):
 
 		# excluding capslocks, numlocks, etc...
 		bitMask = event.mod & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
@@ -49,6 +50,8 @@ class FocusedBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
 			# 		block.recalcSurfaceRecursively(1)
 			pass
 
+		return {}
+
 	@overrides(AbstractEventHandler)
-	def handleSpecificEvent(self, event: Event):
-		pass
+	def handleSpecificEvent(self, event: Event, paramsFromParent: dict):
+		return {}

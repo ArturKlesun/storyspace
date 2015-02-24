@@ -14,7 +14,7 @@ class FocusedInputEventHandler(AbstractEventHandler):
 		return self.getContext()
 
 	@overrides(AbstractEventHandler)
-	def handleMouseEvent(self, event: dict):
+	def handleMouseEvent(self, event: dict, paramsFromParent: dict):
 		if event.type == pygame.MOUSEBUTTONUP:
 
 			if event.button == 4: # scroll-up
@@ -22,8 +22,10 @@ class FocusedInputEventHandler(AbstractEventHandler):
 			elif event.button == 5: #scroll-down
 				self.getInput().scroll(self.MOUSE_SCROLL_STEP_SIZE)
 
+		return {}
+
 	@overrides(AbstractEventHandler)
-	def handleKeydown(self, event):
+	def handleKeydown(self, event, paramsFromParent: dict):
 
 		# excluding capslocks, numlocks, etc...
 		bitMask = event.mod & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
@@ -80,6 +82,8 @@ class FocusedInputEventHandler(AbstractEventHandler):
 			elif len(event.unicode):
 				self.getInput().insertIntoText(event.unicode)
 
+		return {}
+
 	@overrides(AbstractEventHandler)
-	def handleSpecificEvent(self, event: dict):
-		pass
+	def handleSpecificEvent(self, event: dict, paramsFromParent: dict):
+		return {}
