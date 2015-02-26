@@ -6,7 +6,7 @@ from classes.Fp import vectorDiff, overrides
 import classes as huj
 
 
-class FocusedBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
+class FocusedTextBlockEventHandler(AbstractEventHandler): # TODO: POLIMORPHIZM
 
 	def getBlock(self) -> AbstractBlock:
 		return self.getContext() # TODO: it should be passed from parent, not gotten from environment
