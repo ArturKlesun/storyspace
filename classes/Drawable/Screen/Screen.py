@@ -2,7 +2,7 @@ import pygame
 from pygame.constants import *
 
 from classes.Drawable.AbstractDrawable import AbstractDrawable
-from classes.Fp import isRectInRect, vectorSum, overrides
+from classes.Fp import isRectInRect, vectorSum, overrides, vectorMult, vectorDiff
 from classes.Drawable.Screen.Block.AbstractBlock import AbstractBlock
 from classes.Constants import Constants
 import classes as huj
@@ -12,13 +12,11 @@ class Screen(AbstractDrawable):
 
 	CAM_INDENT_WIDTH = 30
 	CAM_STEP_PER_FRAME = 25
-	SCALE_CHANGE_STEP = 0.5
+	SCALE_CHANGE_STEP = 0.1
 	DEFAULT_WINDOW_SIZE = [600,400]
 
 	CUR_MOUSE_POS = [0,0]
 	IS_FULLSCREEN = False
-
-	scaleKoef = 1.0
 
 	instance = None
 	lastSize = (400,400)
@@ -29,7 +27,6 @@ class Screen(AbstractDrawable):
 	def __init__(self):
 		super(Screen, self).__init__(None)
 
-		self.size(Screen.DEFAULT_WINDOW_SIZE)
 		self.camPos([0,0])
 		self.scaleKoef = 1.0
 		self.focusedBlock = None
@@ -44,11 +41,13 @@ class Screen(AbstractDrawable):
 
 	@overrides(AbstractDrawable)
 	def recalcSurface(self):
-		self.surface.fill([0,0,0])
-		for block in self.childList:
-			if isRectInRect(self.getCamRect(), block.getRect()):
-				# TODO: scaling is alfa now
-				block.drawOnParent(self.camPos())
+		tmpSurface = pygame.Surface( vectorMult(self.size(), self.scaleKoef**-1) )
+		tmpSurface.fill([0,0,0])
+		for block in self.getBlockInFrameList():
+			tmpSurface.blit(block.getSurface(), vectorDiff( block.pos(), self.camPos() ) )
+		self.surface.blit(
+			pygame.transform.smoothscale(tmpSurface, self.size())
+				if self.scaleKoef > 0.5 else pygame.transform.scale(tmpSurface, self.size()), [0,0])
 
 	@overrides(AbstractDrawable)
 	def recalcSize(self):
@@ -61,6 +60,10 @@ class Screen(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def getFocusedChild(self):
 		return self.getFocusedBlock()
+
+	@overrides(AbstractDrawable)
+	def getDefaultSize(self):
+		return Screen.DEFAULT_WINDOW_SIZE
 
 	# class specific methods
 
@@ -84,10 +87,10 @@ class Screen(AbstractDrawable):
 	# cam methods
 
 	def calcMouseAbsolutePos(self):
-		return vectorSum(Screen.CUR_MOUSE_POS, self.camPos())
+		return vectorMult( vectorSum(Screen.CUR_MOUSE_POS, self.camPos()), self.scaleKoef**-1 )
 
 	def scale(self, koef):
-		self.scaleKoef += koef * Screen.SCALE_CHANGE_STEP
+		self.scaleKoef *= 1.5**koef
 		self.recalcSurfaceRecursively(0)
 
 	def moveCam(self, vector):
@@ -101,7 +104,7 @@ class Screen(AbstractDrawable):
 		return self.camLeft, self.camTop
 
 	def getCamRect(self):
-		return self.camPos()[0], self.camPos()[1], self.size()[0], self.size()[1]
+		return self.camPos()[0], self.camPos()[1], int(self.size()[0] / self.scaleKoef), int(self.size()[1] / self.scaleKoef)
 
 	def getCameraBorderRect(self):
 		indent = Screen.CAM_INDENT_WIDTH
@@ -109,7 +112,8 @@ class Screen(AbstractDrawable):
 
 	def getBlockInFrameList(self):
 		# TODO: "in frame"
-		return self.getChildBlockList()
+		# isRectInRect(self.getCamRect(), block.getRect())
+		return [block for block in self.getChildBlockList() if isRectInRect(self.getCamRect(), block.getRect())]
 
 	# child block methods
 

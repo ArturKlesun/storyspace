@@ -39,7 +39,8 @@ class Config(object):
 		fileObj.close()
 
 	def readDataFromFile(self):
-		fileObj = open(self.contentFilePath, 'r')
-		data = json.loads(fileObj.read())
+		fileObj = open(self.contentFilePath, 'r', encoding='utf-8')
+		huj = fileObj.read()
 		fileObj.close()
+		data = json.loads(huj)
 		return data

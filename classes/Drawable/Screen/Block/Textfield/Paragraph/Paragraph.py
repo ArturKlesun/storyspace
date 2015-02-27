@@ -129,6 +129,10 @@ class Paragraph(AbstractDrawable):
 		self.setWidth(self.getParentTextfield().size()[0])
 
 	@overrides(AbstractDrawable)
+	def getDefaultSize(self):
+		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
+
+	@overrides(AbstractDrawable)
 	def getSurface(self, rowIdx=0):
 		# TODO: make it like in all other drawables, so i could move this method implementation into abstract class
 		self.recalcSurface()

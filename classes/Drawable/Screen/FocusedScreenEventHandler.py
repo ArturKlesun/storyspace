@@ -8,9 +8,11 @@ from pygame.constants import *
 
 from classes.Config import Config
 from classes.Drawable.AbstractEventHandler import AbstractEventHandler
+from classes.Drawable.Screen.Block.ImageBlock import ImageBlock
 from classes.Drawable.Screen.Screen import Screen
-from classes.Fp import vectorDiff, vectorReverse, overrides
+from classes.Fp import vectorDiff, vectorReverse, overrides, isPointInRect, getVectorFromRectToPoint, vectorMult
 from classes.Drawable.Screen.Block.TextBlock import TextBlock
+import classes as huj
 
 
 class FocusedScreenEventHandler(AbstractEventHandler):
@@ -22,7 +24,7 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 	@overrides(AbstractEventHandler)
 	def handleMouseEvent(self, event, paramsFromParent: dict):
 
-		mouseVector = vectorDiff(event.pos, Screen.CUR_MOUSE_POS)
+		mouseVector = vectorMult( vectorDiff(event.pos, Screen.CUR_MOUSE_POS), self.getScreen().scaleKoef**-1 )
 
 		if event.type == pygame.MOUSEBUTTONDOWN:
 			Screen.CUR_MOUSE_POS = event.pos
@@ -56,8 +58,11 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 			elif event.key == pygame.K_o:
 				self.getScreen().reconstruct(Config.getInstance().readDataFromFile())
 
-			elif event.key == pygame.K_n:
+			elif event.key == pygame.K_t:
 				block = TextBlock(self.getScreen(), {'pos': self.getScreen().camPos()})
+				block.acquireFocus()
+			elif event.key == pygame.K_i:
+				block = ImageBlock(self.getScreen(), {'pos': self.getScreen().camPos()})
 				block.acquireFocus()
 
 			elif event.key == pygame.K_SLASH:
@@ -74,6 +79,12 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 			elif event.key == pygame.K_f:
 				self.getScreen().switchFullscreen()
 
+			# slow tempo for debug
+			elif event.key == pygame.K_LEFTBRACKET: # [
+				self.getTimerHandler().frameDelay *= 2
+			elif event.key == pygame.K_RIGHTBRACKET: # ]
+				self.getTimerHandler().frameDelay //= 2
+
 		return {}
 
 	@overrides(AbstractEventHandler)
@@ -86,3 +97,16 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 			sys.exit()
 
 		return {}
+
+	def handleCustomEvent(self, event: dict):
+		if event['eventType'] == 'frameRefreshed':
+			if Screen.IS_FULLSCREEN: # TODO: it should be instance
+				borderRect = Screen.getInstance().getCameraBorderRect()
+				if not isPointInRect(Screen.CUR_MOUSE_POS, borderRect):
+					Screen.getInstance().moveCam( getVectorFromRectToPoint(borderRect, Screen.CUR_MOUSE_POS) )
+
+	def setTimerHandler(self, timerHandler):
+		self.timerHandler = timerHandler
+
+	def getTimerHandler(self):
+		return self.timerHandler

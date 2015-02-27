@@ -35,11 +35,11 @@ class Textfield(AbstractTextfield):
 	def __str__(self):
 		return '\n\t' + 'Textfield: ' + str(self.getParagraphList())
 
-	# operations with text
+	# abstract method implementation
 
 	# may have memory leaks
 	@overrides(AbstractTextfield)
-	def insertIntoText(self, substr): # TODO: most certainly consists of bugs
+	def insertIntoText(self, substr):
 		substrLen = len(substr)
 		newParTextList = substr.split("\n")
 		appendToLast = self.getCurPar().cutReplaceAfterPointer(newParTextList.pop(0))
@@ -73,6 +73,12 @@ class Textfield(AbstractTextfield):
 	@overrides(AbstractDrawable)
 	def getEventHandler(self):
 		return huj.Drawable.Screen.Block.Textfield.FocusedInputEventHandler.FocusedInputEventHandler(self)
+
+	@overrides(AbstractDrawable)
+	def getDefaultSize(self):
+		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
+
+	# operations with text
 
 	def deleteFromText(self, n):
 		if n < 0:

@@ -24,7 +24,7 @@ class ClassImporter(object):
 		import classes.Drawable.Screen.Block.AbstractBlock
 		import classes.Drawable.Screen.Block.TextBlock
 		import classes.Drawable.Screen.Block.ImageBlock
-		import classes.Drawable.Screen.Block.FocusedBlockEventHandler
+		import classes.Drawable.Screen.Block.FocusedTextBlockEventHandler
 
 		import classes.Drawable.Screen.Block.Textfield
 		import classes.Drawable.Screen.Block.Textfield.AbstractTextfield
@@ -35,5 +35,5 @@ class ClassImporter(object):
 		import classes.Drawable.Screen.Block.Textfield.Paragraph.Paragraph
 		import classes.Drawable.Screen.Block.Textfield.Paragraph.FocusedParagraphEventHandler
 
-		import classes.Drawable.Screen.Block.Textfield.Paragraph.TextLine
+		# import classes.Drawable.Screen.Block.Textfield.Paragraph.TextLine
 

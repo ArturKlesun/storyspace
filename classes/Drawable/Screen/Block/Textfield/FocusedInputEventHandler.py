@@ -18,7 +18,7 @@ class FocusedInputEventHandler(AbstractEventHandler):
 		if event.type == pygame.MOUSEBUTTONUP:
 
 			if event.button == 4: # scroll-up
-				self.getInput().scroll(self.MOUSE_SCROLL_STEP_SIZE)
+				self.getInput().scroll(-self.MOUSE_SCROLL_STEP_SIZE)
 			elif event.button == 5: #scroll-down
 				self.getInput().scroll(self.MOUSE_SCROLL_STEP_SIZE)
 

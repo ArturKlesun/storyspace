@@ -14,16 +14,15 @@ class AbstractDrawable(metaclass=ABCMeta):
 	surfaceChanged = True
 	
 	def __init__(self, parent, data=None):
-		self.width = 0
-		self.height = 0
-		self.left = 0
-		self.top = 0
 		
 		self.setParent(parent)
 		self.surfaceChanged = True
 
 		if not self.getParent() is None: self.getParent().childList.append(self)
 		self.childList = []
+
+		self.size(self.getDefaultSize())
+		self.pos([0,0])
 	
 	def drawOnParent(self, shiftVector=[0,0]):
 		self.getParent().surface.blit(self.getSurface(), vectorSum(self.pos(), vectorReverse(shiftVector)))
@@ -49,6 +48,10 @@ class AbstractDrawable(metaclass=ABCMeta):
 	@abstractmethod
 	def getFocusedChild(self):
 		""":rtype: AbstractDrawable"""
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+
+	@abstractmethod
+	def getDefaultSize(self):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 	
 	def isPointed(self, pointerPos):
@@ -87,6 +90,7 @@ class AbstractDrawable(metaclass=ABCMeta):
 		return self.left, self.top
 	
 	def getParent(self):
+		""":rtype: AbstractDrawable"""
 		return self.parent;
 	
 	def setParent(self, value):
