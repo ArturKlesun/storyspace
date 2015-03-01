@@ -1,3 +1,4 @@
+import pygame
 from pygame.event import Event
 from classes.Drawable.Screen.Block.AbstractFocusedBlockEventHandler import AbstractFocusedBlockEventHandler
 
@@ -5,4 +6,7 @@ from classes.Drawable.Screen.Block.AbstractFocusedBlockEventHandler import Abstr
 class FocusedTextBlockEventHandler(AbstractFocusedBlockEventHandler):
 
 	def handleKeydownInherited(self, event: Event, paramsFromParent: dict):
-		pass
+
+		if event.key == pygame.K_SLASH:
+			self.getBlock().switchFocus()
+

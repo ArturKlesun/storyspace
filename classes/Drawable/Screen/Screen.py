@@ -2,6 +2,8 @@ import pygame
 from pygame.constants import *
 
 from classes.Drawable.AbstractDrawable import AbstractDrawable
+from classes.Drawable.Screen.Dialog.Dialog import Dialog
+from classes.Drawable.Screen.Dialog.IDialogCaller import IDialogCaller
 from classes.Fp import isRectInRect, vectorSum, overrides, vectorMult, vectorDiff
 from classes.Drawable.Screen.Block.AbstractBlock import AbstractBlock
 from classes.Constants import Constants
@@ -25,26 +27,23 @@ class Screen(AbstractDrawable):
 
 	@overrides(AbstractDrawable)
 	def __init__(self):
-		super(Screen, self).__init__(None)
-
-		self.camPos([0,0])
 		self.scaleKoef = 1.0
 		self.focusedBlock = None
+		self.camPos([0,0])
+
+		super(Screen, self).__init__(None)
 
 		self.recalcSize()
 
 	@overrides(AbstractDrawable)
-	def getSurface(self):
-		if self.surfaceChanged:
-			self.recalcSurface()
-		return self.surface
-
-	@overrides(AbstractDrawable)
 	def recalcSurface(self):
+		# TODO: do it without tmpSurface one day, i.e. drawing each minimized child separately maybe
 		tmpSurface = pygame.Surface( vectorMult(self.size(), self.scaleKoef**-1) )
 		tmpSurface.fill([0,0,0])
 		for block in self.getBlockInFrameList():
 			tmpSurface.blit(block.getSurface(), vectorDiff( block.pos(), self.camPos() ) )
+		if self.getDialog() is not None:
+			tmpSurface.blit(self.getDialog().getSurface(), vectorDiff( self.getDialog().pos(), self.camPos() ))
 		self.surface.blit(
 			pygame.transform.smoothscale(tmpSurface, self.size())
 				if self.scaleKoef > 0.5 else pygame.transform.scale(tmpSurface, self.size()), [0,0])
@@ -64,6 +63,10 @@ class Screen(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def getDefaultSize(self):
 		return Screen.DEFAULT_WINDOW_SIZE
+
+	@overrides(AbstractDrawable)
+	def getAbsolutePos(self):
+		return 0,0
 
 	# class specific methods
 
@@ -87,9 +90,10 @@ class Screen(AbstractDrawable):
 	# cam methods
 
 	def calcMouseAbsolutePos(self):
-		return vectorMult( vectorSum(Screen.CUR_MOUSE_POS, self.camPos()), self.scaleKoef**-1 )
+		return vectorSum( vectorMult(Screen.CUR_MOUSE_POS, self.scaleKoef**-1), self.camPos())
 
 	def scale(self, koef):
+		# TODO: move cam so that scale was centered
 		self.scaleKoef *= 1.5**koef
 		self.recalcSurfaceRecursively(0)
 
@@ -111,13 +115,11 @@ class Screen(AbstractDrawable):
 		return indent, indent, self.getWidth() - indent * 2, self.getHeight() - indent * 2
 
 	def getBlockInFrameList(self):
-		# TODO: "in frame"
-		# isRectInRect(self.getCamRect(), block.getRect())
 		return [block for block in self.getChildBlockList() if isRectInRect(self.getCamRect(), block.getRect())]
 
 	# child block methods
 
-	def getFocusedBlock(self): # i could specify that context is instance of AbstractBlock, but python won't allow circular imports easily. Pidr.
+	def getFocusedBlock(self):
 		""":rtype: classes.Drawable.Screen.Block.AbstractBlock"""
 		return self.focusedBlock
 
@@ -125,7 +127,7 @@ class Screen(AbstractDrawable):
 		self.focusedBlock = value
 
 	def getChildBlockList(self):
-		return self.childList
+		return [block for block in self.childList if isinstance(block, AbstractBlock)]
 
 	def reconstruct(self, blockDataList):
 		self.clearBlockList()
@@ -141,3 +143,16 @@ class Screen(AbstractDrawable):
 		if defocused is not None:
 			defocused.recalcSurfaceBacursively()
 			defocused.getSurface()
+
+	# child dialog methods
+
+	def interceptDialog(self, interceptor: IDialogCaller, params):
+		if self.getDialog() is not None:
+			self.getDialog().destroy()
+		Dialog(self, interceptor, params)
+
+	# getters/setters
+
+	def getDialog(self) -> Dialog:
+		dialogList = [dialog for dialog in self.childList if isinstance(dialog, Dialog)]
+		return dialogList[0] if len(dialogList) else None

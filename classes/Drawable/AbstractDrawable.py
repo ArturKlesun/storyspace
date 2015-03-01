@@ -1,3 +1,4 @@
+import pygame
 from classes.Fp import *
 from classes.Constants import Constants
 from abc import abstractmethod, ABCMeta
@@ -23,17 +24,14 @@ class AbstractDrawable(metaclass=ABCMeta):
 
 		self.size(self.getDefaultSize())
 		self.pos([0,0])
+
+		self.recalcSurfaceBacursively()
 	
 	def drawOnParent(self, shiftVector=[0,0]):
 		self.getParent().surface.blit(self.getSurface(), vectorSum(self.pos(), vectorReverse(shiftVector)))
 
 	@abstractmethod
 	def recalcSize(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-	
-	@abstractmethod
-	def getSurface(self):
-		# TODO: it should not be abstract
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
 	@abstractmethod
@@ -53,23 +51,50 @@ class AbstractDrawable(metaclass=ABCMeta):
 	@abstractmethod
 	def getDefaultSize(self):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+
+	def getSurface(self):
+		if self.surfaceChanged:
+			self.recalcSurface()
+			self.surfaceChanged = False
+		return self.surface
 	
 	def isPointed(self, pointerPos):
-		return isPointInRect(pointerPos, (self.left, self.top, self.width, self.height))
-	
+		return isPointInRect(pointerPos,(self.left, self.top, self.width, self.height) )
+
+	def getAbsolutePos(self):
+		return vectorSum(self.getParent().getAbsolutePos(), self.pos())
+
+	def getRootParent(self): # love you recursion
+		""":rtype: classes.Drawable.Screen.Screen.Screen"""
+		if self.getParent() is None:
+			return self
+		else:
+			return self.getParent().getRootParent()
+
 	def sizeAddVector(self, vector):
 		self.size( vectorSum(self.size(), vector) )
 
 	def posAddVector(self, vector):
 		self.pos( vectorSum(self.pos(), vector) )
-	
+
+	def pos(self, value = None):
+		if value:
+			self.left = value[0]
+			self.top = value[1]
+
+			if self.getParent() is not None: self.getParent().recalcSurfaceBacursively()
+		return self.left, self.top
+
 	def size(self, value = None):
 		if value is not None:
 			self.width = max(value[0], Constants.CHAR_WIDTH)
 			self.height = max(value[1], Constants.CHAR_HEIGHT)
+			self.surface = pygame.Surface([self.width, self.height])
+			self.recalcSurfaceBacursively()
 			
-			for child in self.childList:
+			for child in self.childList: # not sure if needed
 				child.recalcSize()
+
 		return self.width, self.height
 	
 	def recalcSurfaceRecursively(self, n=0):
@@ -80,14 +105,12 @@ class AbstractDrawable(metaclass=ABCMeta):
 	
 	def recalcSurfaceBacursively(self):
 		self.surfaceChanged = True
-		if not isinstance(self.getParent(), huj.Drawable.Screen.Screen.Screen):
-			self.getParent().recalcSurfaceBacursively()
+		if self.getParent() is not None: self.getParent().recalcSurfaceBacursively()
 
-	def pos(self, value = None):
-		if value:
-			self.left = value[0]
-			self.top = value[1]
-		return self.left, self.top
+	def destroy(self):
+		for child in self.childList:
+			child.destroy()
+		self.getParent().childList.remove(self)
 	
 	def getParent(self):
 		""":rtype: AbstractDrawable"""
@@ -100,16 +123,19 @@ class AbstractDrawable(metaclass=ABCMeta):
 		return self.size()[0]
 	
 	def setWidth(self, value):
-		self.width = value
-	
+		self.size([value, self.size()[1]])
+
+	def getHeight(self):
+		return self.size()[1]
+
+	def setHeight(self, value):
+		self.size([self.size()[0], value])
+
 	def setTop(self, value):
 		self.top = value
 	
 	def setLeft(self, value):
 		self.left = value
-	
-	def getHeight(self):
-		return self.size()[1]
 
 	def getRect(self):
 		return self.pos()[0], self.pos()[1], self.size()[0], self.size()[1]

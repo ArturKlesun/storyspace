@@ -11,7 +11,7 @@ def vectorReverse(vector):
 	return vectorDiff([0,0], vector)
 
 def isPointInRect(p, r):
-	return p[0] > r[0] and p[1] > r[1] and p[0] < r[0] + r[2] and p[1] < r[1] + r[3]
+	return r[0] < p[0] < r[0] + r[2] and r[1] < p[1] < r[1] + r[3]
 
 def isRectInRect(r1, r2):
 	return not (r1[0] + r1[2] < r2[0] or r1[1] + r1[3] < r2[1] or r1[0] > r2[0] + r2[2] or r1[1] > r2[1] + r2[3])

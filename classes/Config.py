@@ -3,6 +3,7 @@ import json
 import pygame
 
 import classes
+from classes.Constants import Constants
 
 
 class Config(object):
@@ -12,7 +13,7 @@ class Config(object):
 	instance = None
 
 	params = {}
-	contentFilePath = 'guzno'
+	contentFolderPath = 'guzno'
 
 	@staticmethod
 	def getInstance():
@@ -28,10 +29,22 @@ class Config(object):
 		self.params = json.loads(configFile.read())
 		configFile.close()
 
-		self.contentFilePath = self.params['contentFilePath']
+		self.contentFolderPath = self.params['contentFolderPath']
+		self.imageDict = {}
+
+	def getImageByName(self, imageName):
+		imgPath = self.contentFolderPath + 'images/' + imageName
+		if imageName not in self.imageDict:
+			try:
+				img = pygame.image.load(imgPath)
+				self.imageDict[imageName] = img
+			except pygame.error as err:
+				self.imageDict[imageName] = Constants.PROJECT_FONT.render('invalid file ' + imageName, True, [255,0,0])
+
+		return self.imageDict[imageName]
 
 	def saveToFile(self):
-		fileObj = open(self.contentFilePath, 'w')
+		fileObj = open(self.contentFolderPath + 'storyspaceContent.json', 'w', encoding='utf-8')
 		fileContent= [];
 		for block in classes.Drawable.Screen.Screen.Screen.getInstance().getChildBlockList():
 			fileContent.append(block.getObjectState())
@@ -39,7 +52,7 @@ class Config(object):
 		fileObj.close()
 
 	def readDataFromFile(self):
-		fileObj = open(self.contentFilePath, 'r', encoding='utf-8')
+		fileObj = open(self.contentFolderPath + 'storyspaceContent.json', 'r', encoding='utf-8')
 		huj = fileObj.read()
 		fileObj.close()
 		data = json.loads(huj)

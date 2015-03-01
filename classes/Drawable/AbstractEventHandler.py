@@ -16,6 +16,7 @@ class AbstractEventHandler(metaclass=ABCMeta):
 		return self.context
 
 	def handlePygameEvent(self, event: Event, paramsFromParent: dict = {}): # TODO: this paramsFromParent actually is bad, just temporary solution
+		event.dontPassFurther = False
 		if event.type == pygame.KEYDOWN:
 			paramsFromParent.update(self.handleKeydown(event, paramsFromParent))
 		elif event.type in self.MOUSE_EVENT_TYPE_LIST:
@@ -23,7 +24,10 @@ class AbstractEventHandler(metaclass=ABCMeta):
 		else:
 			paramsFromParent.update(self.handleSpecificEvent(event, paramsFromParent))
 
-		if self.getContext().getFocusedChild() is not None:
+		if self.getContext() is self.getContext().getRootParent(): # TODO: temporary solution. should think something about these events
+			if self.getContext().getRootParent().getDialog() is not None:
+				self.getContext().getRootParent().getDialog().getEventHandler().handlePygameEvent(event, paramsFromParent)
+		if self.getContext().getFocusedChild() is not None and not event.dontPassFurther:
 			self.getContext().getFocusedChild().getEventHandler().handlePygameEvent(event, paramsFromParent)
 
 	@abstractmethod

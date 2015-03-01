@@ -10,14 +10,6 @@ import classes as huj
 
 class Paragraph(AbstractDrawable):
 
-	@overrides(AbstractDrawable)
-	def getEventHandler(self):
-		return huj.Drawable.Screen.Block.Textfield.Paragraph.FocusedParagraphEventHandler.FocusedParagraphEventHandler(self)
-
-	@overrides(AbstractDrawable)
-	def getFocusedChild(self) -> AbstractDrawable:
-		return None
-
 	text = ''
 
 	pointerPos = 0
@@ -37,6 +29,48 @@ class Paragraph(AbstractDrawable):
 	def __repr__(self):
 		return '\n\t\t' + self.__str__()
 
+	@overrides(AbstractDrawable)
+	def recalcSize(self):
+		self.setWidth(self.getParentTextfield().size()[0])
+
+	@overrides(AbstractDrawable)
+	def getDefaultSize(self):
+		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
+
+	@overrides(AbstractDrawable)
+	def recalcSurface(self):
+		self.surface = pygame.Surface([
+				self.getWidth(),
+				len(self.getRowList()) * Constants.CHAR_HEIGHT])
+		self.surface.fill(self.getParentTextfield().getTextBgColor())
+		i = 0
+		for row in self.getRowList():
+			label = Constants.PROJECT_FONT.render(row, 1,
+					self.getParentTextfield().getTextColor(),
+					self.getParentTextfield().getTextBgColor())
+			self.surface.blit(label, [0, i * Constants.CHAR_HEIGHT])
+			i += 1
+		# to visually split paragraphs
+		pygame.draw.line(self.surface, [255,230,230], [0, 0], [self.surface.get_width(), 0])
+
+		# drawing pointer
+		if self.getParent().getFocusedChild() is self:
+			pointerRow = self.getPointerPos() // self.getCharInRowCount()
+			pointerCol = self.getPointerPos() % self.getCharInRowCount()
+			pygame.draw.line(self.surface, [255,0,0],
+				[pointerCol * Constants.CHAR_WIDTH, pointerRow * Constants.CHAR_HEIGHT],
+				[pointerCol * Constants.CHAR_WIDTH, (pointerRow + 1) * Constants.CHAR_HEIGHT])
+
+		return self.surface
+
+	@overrides(AbstractDrawable)
+	def getEventHandler(self):
+		return huj.Drawable.Screen.Block.Textfield.Paragraph.FocusedParagraphEventHandler.FocusedParagraphEventHandler(self)
+
+	@overrides(AbstractDrawable)
+	def getFocusedChild(self) -> AbstractDrawable:
+		return None
+
 	def getParentTextfield(self):
 		return self.getParent()
 		
@@ -52,6 +86,7 @@ class Paragraph(AbstractDrawable):
 		if pointerPos < 0: pointerPos = 0
 		if pointerPos > len(self.getText()): pointerPos = len(self.getText())
 		self.pointerPos = pointerPos
+		self.recalcSurfaceBacursively()
 
 	def cropToPointer(self):
 		return self.crop(0, self.getPointerPos())
@@ -114,7 +149,7 @@ class Paragraph(AbstractDrawable):
 	def getCharInRowCount(self):
 		return self.getWidth() // Constants.CHAR_WIDTH
 
-	def calcRowList(self):
+	def getRowList(self):
 		rowList = []
 		charInRowCount = self.getCharInRowCount()
 		textLeft = self.getText()
@@ -123,50 +158,3 @@ class Paragraph(AbstractDrawable):
 			rowList.append(row)
 
 		return rowList if len(rowList) > 0 else ['']
-
-	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		self.setWidth(self.getParentTextfield().size()[0])
-
-	@overrides(AbstractDrawable)
-	def getDefaultSize(self):
-		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
-
-	@overrides(AbstractDrawable)
-	def getSurface(self, rowIdx=0):
-		# TODO: make it like in all other drawables, so i could move this method implementation into abstract class
-		self.recalcSurface()
-		surface = pygame.Surface([
-				self.surface.get_width(), 
-				self.surface.get_height() - rowIdx * Constants.CHAR_HEIGHT])
-		surface.fill([255,255,255])
-		surface.blit(self.surface, [0, -rowIdx * Constants.CHAR_HEIGHT])
-		pygame.draw.line(surface, [255,230,230], [0, 0], [surface.get_width(), 0])
-		return surface
-
-	def genBitmap(self):
-		surface = pygame.Surface([
-				self.getWidth(),
-				len(self.getRowList()) * Constants.CHAR_HEIGHT])
-		surface.fill(self.getParentTextfield().getTextBgColor())
-		i = 0
-		for row in self.getRowList():
-			label = Constants.PROJECT_FONT.render(row, 1,
-					self.getParentTextfield().getTextColor(),
-					self.getParentTextfield().getTextBgColor())
-			surface.blit(label, [0, i * Constants.CHAR_HEIGHT])
-			i += 1
-		
-		return surface
-
-	@overrides(AbstractDrawable)
-	def recalcSurface(self):
-		self.getRowList()
-
-	def getRowList(self):
-		if self.surfaceChanged:
-			self.rowList = self.calcRowList()
-			self.surfaceChanged = False
-			self.surface = self.genBitmap()
-		
-		return self.rowList

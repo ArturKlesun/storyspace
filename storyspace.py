@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from tkinter import Tk
-import pygame
 
 from classes.ClassImporter import ClassImporter
-from classes.Clipboard import Clipboard
 
 ClassImporter.importAllClasses()
 

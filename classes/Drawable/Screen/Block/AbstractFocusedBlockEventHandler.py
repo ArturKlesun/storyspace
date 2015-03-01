@@ -41,19 +41,10 @@ class AbstractFocusedBlockEventHandler(AbstractEventHandler):
 		# excluding capslocks, numlocks, etc...
 		bitMask = event.mod & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
 
-		if bitMask & pygame.KMOD_LCTRL:
-
-			# can do it instance, it has pros, for example no need to recalc ALL blocks
-			# ----------------------
-			# elif event.key == pygame.K_SLASH:
-			# 	huj.TextBlock.TextBlock.DISPLAY_STATUS_BAR = not huj.TextBlock.TextBlock.DISPLAY_STATUS_BAR
-			# 	for block in Screen.getChildBlockList():
-			# 		block.size(block.size())
-			# 		block.recalcSurfaceRecursively(1)
+		if bitMask & pygame.KMOD_RCTRL:
 
 			if event.key == pygame.K_DELETE:
-				self.getBlock().getParent().releaseFocusedBlock()
-				self.getBlock().getParent().childList.remove(self.getBlock())
+				self.getBlock().destroy()
 
 		self.handleKeydownInherited(event, paramsFromParent)
 		return {}

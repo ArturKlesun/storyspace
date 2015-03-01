@@ -23,18 +23,26 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 
 	@overrides(AbstractEventHandler)
 	def handleMouseEvent(self, event, paramsFromParent: dict):
-
 		mouseVector = vectorMult( vectorDiff(event.pos, Screen.CUR_MOUSE_POS), self.getScreen().scaleKoef**-1 )
 
 		if event.type == pygame.MOUSEBUTTONDOWN:
 			Screen.CUR_MOUSE_POS = event.pos
+			bitMask = pygame.key.get_mods() & (pygame.KMOD_ALT | pygame.KMOD_CTRL | pygame.KMOD_SHIFT)
 
-			blockList = self.getScreen().getBlockInFrameList()
-			absoluteMousePos = self.getScreen().calcMouseAbsolutePos()
-			pointedBlockList = [block for block in blockList if block.isPointed(absoluteMousePos)]
-			self.getScreen().releaseFocusedBlock()
-			if len(pointedBlockList):
-				pointedBlockList[0].acquireFocus() # TODO: z-index
+			if event.button == 1: # scroll-up
+
+				blockList = self.getScreen().getBlockInFrameList()
+				absoluteMousePos = self.getScreen().calcMouseAbsolutePos()
+				pointedBlockList = [block for block in blockList if block.isPointed(absoluteMousePos)]
+				self.getScreen().releaseFocusedBlock()
+				if len(pointedBlockList):
+					pointedBlockList[0].acquireFocus() # TODO: z-index
+
+			elif event.button == 4 and bitMask & pygame.KMOD_LCTRL: # scroll-up
+				self.getScreen().scale(+1)
+			elif event.button == 5 and bitMask & pygame.KMOD_LCTRL: #scroll-down
+				self.getScreen().scale(-1)
+
 
 		elif event.type == pygame.MOUSEMOTION:
 
@@ -64,12 +72,6 @@ class FocusedScreenEventHandler(AbstractEventHandler):
 			elif event.key == pygame.K_i:
 				block = ImageBlock(self.getScreen(), {'pos': self.getScreen().camPos()})
 				block.acquireFocus()
-
-			elif event.key == pygame.K_SLASH:
-				TextBlock.DISPLAY_STATUS_BAR = not TextBlock.TextBlock.DISPLAY_STATUS_BAR
-				for block in self.getScreen().getChildBlockList():
-					block.size(block.size())
-					block.recalcSurfaceRecursively(1)
 
 			elif event.key == pygame.K_EQUALS:
 				self.getScreen().scale(+1)

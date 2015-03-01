@@ -2,7 +2,7 @@ import pygame
 
 from classes.Clipboard import Clipboard
 from classes.Drawable.AbstractEventHandler import AbstractEventHandler
-from classes.Drawable.Screen.Block.Textfield import AbstractTextfield
+from classes.Drawable.Screen.Block.Textfield.AbstractInput import AbstractInput
 from classes.Fp import overrides
 
 
@@ -10,7 +10,7 @@ class FocusedInputEventHandler(AbstractEventHandler):
 
 	MOUSE_SCROLL_STEP_SIZE = 4
 
-	def getInput(self) -> AbstractTextfield:
+	def getInput(self) -> AbstractInput:
 		return self.getContext()
 
 	@overrides(AbstractEventHandler)
@@ -19,7 +19,7 @@ class FocusedInputEventHandler(AbstractEventHandler):
 
 			if event.button == 4: # scroll-up
 				self.getInput().scroll(-self.MOUSE_SCROLL_STEP_SIZE)
-			elif event.button == 5: #scroll-down
+			elif event.button == 5: # scroll-down
 				self.getInput().scroll(self.MOUSE_SCROLL_STEP_SIZE)
 
 		return {}

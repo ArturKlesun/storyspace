@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import pygame
+from classes.Drawable.Screen.Block.Textfield.AbstractInput import AbstractInput
 
 from classes.Drawable.Screen.Block.Textfield.Paragraph.Paragraph import Paragraph
 from classes.Constants import Constants
 from classes.Fp import overrides
-from classes.Drawable.Screen.Block.Textfield.AbstractTextfield import AbstractTextfield
 from classes.Drawable.AbstractDrawable import AbstractDrawable
 import classes as huj
 
 
-class Textfield(AbstractTextfield):
+class Textfield(AbstractInput):
 
 	pointerParagraph = 0
 	scrollPos = 0
@@ -37,8 +37,7 @@ class Textfield(AbstractTextfield):
 
 	# abstract method implementation
 
-	# may have memory leaks
-	@overrides(AbstractTextfield)
+	@overrides(AbstractInput)
 	def insertIntoText(self, substr):
 		substrLen = len(substr)
 		newParTextList = substr.split("\n")
@@ -54,17 +53,22 @@ class Textfield(AbstractTextfield):
 
 		self.movePointer(substrLen)
 
+	@overrides(AbstractInput)
+	def movePointer(self, n):
+		pointerPos = self.getCurPar().getPointerPos() + n
+		while pointerPos // self.getCurPar().getTextLen() > 0 and self.pointerParagraph != len(self.paragraphList) - 1:
+			pointerPos -= self.getCurPar().getTextLen()
+			self.setPointerPar(self.pointerParagraph + 1)
+		while pointerPos < 0 < self.pointerParagraph:
+			self.setPointerPar(self.pointerParagraph - 1)
+			pointerPos += self.getCurPar().getTextLen()
+
+		self.getCurPar().setPointerPos(pointerPos)
+		self.moveScrollToPointer()
+
 	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		self.size(self.getParentBlock().calcTextfieldSize())
-
-	@overrides(AbstractDrawable)
-	def getSurface(self):
-		if self.surfaceChanged:
-			self.recalcSurface()
-			self.surfaceChanged = False
-
-		return self.surface
 
 	@overrides(AbstractDrawable)
 	def getFocusedChild(self) -> Paragraph:
@@ -111,19 +115,6 @@ class Textfield(AbstractTextfield):
 		return self.paragraphList[self.pointerParagraph]
 
 	# operations with pointer
-
-	def movePointer(self, n):
-		pointerPos = self.getCurPar().getPointerPos() + n
-		while pointerPos // self.getCurPar().getTextLen() > 0 and self.pointerParagraph != len(self.paragraphList) - 1:
-			pointerPos -= self.getCurPar().getTextLen()
-			self.setPointerPar(self.pointerParagraph + 1)
-		while pointerPos < 0 < self.pointerParagraph:
-			self.setPointerPar(self.pointerParagraph - 1)
-			pointerPos += self.getCurPar().getTextLen()
-		
-		self.getCurPar().setPointerPos(pointerPos)
-		self.moveScrollToPointer()
-		self.recalcSurfaceBacursively()
 
 	def ctrlMovePointer(self, n):
 		self.movePointer(self.getCurPar().getShiftToSpace(n))
@@ -180,15 +171,6 @@ class Textfield(AbstractTextfield):
 		elif pointerRow >= self.scrollPos  + self.getPrintedRowCount():
 			self.setScrollPos(pointerRow - self.getPrintedRowCount() + 1)
 
-	def scroll(self, n):
-		self.setScrollPos(self.scrollPos + n)
-
-	def setScrollPos(self, value):
-		self.scrollPos = value
-		if self.scrollPos < 0: self.scrollPos = 0
-		if self.scrollPos >= self.getFullRowCount(): self.scrollPos = self.getFullRowCount() - 1
-		self.recalcSurfaceBacursively()
-
 	# operations with bitmap
 
 	def setTextColor(self, value):
@@ -231,36 +213,23 @@ class Textfield(AbstractTextfield):
 	def getCharInRowCount(self):
 		return self.getWidth() // Constants.CHAR_WIDTH
 
+	@overrides(AbstractDrawable)
 	def recalcSurface(self):
-
-		self.surface = pygame.Surface(self.size())
 		self.surface.fill([255,255,255])
-
 		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
 		
 		y = - rowIdx * Constants.CHAR_HEIGHT
-		while (y < self.getHeight() and parIdx < len(self.getParagraphList())):
+		while y < self.getHeight() and parIdx < len(self.getParagraphList()):
 			bitmapHeight = len(self.paragraphList[parIdx].getRowList()) * Constants.CHAR_HEIGHT
 			self.paragraphList[parIdx].setTop(y)
 			self.paragraphList[parIdx].drawOnParent()
 			y += bitmapHeight
 			parIdx += 1
 
-		self.drawPointerOn(self.surface)
-
-	def drawPointerOn(self, surface):
-		# TODO: encapsulate into Paragraph
-		pointerRow, pointerCol = self.getPointerRowAndCol()
-		if (pointerRow >= self.scrollPos and pointerRow < self.scrollPos + self.getPrintedRowCount()):
-			printedRow = pointerRow - self.scrollPos
-			pygame.draw.line(surface, [255,0,0], 
-				[pointerCol * Constants.CHAR_WIDTH, (printedRow) * Constants.CHAR_HEIGHT], 
-				[pointerCol * Constants.CHAR_WIDTH, (printedRow + 1) * Constants.CHAR_HEIGHT])
-		
 	# model operations
 
 	def getParentBlock(self):
-		':rtype Block'
+		':rtype huj.Drawable.Screen.Block.TextBlock'
 		return self.getParent()
 	
 	def setParentBlock(self, value):

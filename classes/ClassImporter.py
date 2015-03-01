@@ -20,16 +20,23 @@ class ClassImporter(object):
 		import classes.Drawable.Screen.Screen
 		import classes.Drawable.Screen.FocusedScreenEventHandler
 
+		import classes.Drawable.Screen.Dialog
+		import classes.Drawable.Screen.Dialog.IDialogCaller
+		import classes.Drawable.Screen.Dialog.Dialog
+		import classes.Drawable.Screen.Dialog.DialogEventHandler
+
 		import classes.Drawable.Screen.Block
 		import classes.Drawable.Screen.Block.AbstractBlock
 		import classes.Drawable.Screen.Block.TextBlock
 		import classes.Drawable.Screen.Block.ImageBlock
 		import classes.Drawable.Screen.Block.FocusedTextBlockEventHandler
+		import classes.Drawable.Screen.Block.FocusedImageBlockEventHandler
 
 		import classes.Drawable.Screen.Block.Textfield
-		import classes.Drawable.Screen.Block.Textfield.AbstractTextfield
 		import classes.Drawable.Screen.Block.Textfield.Textfield
+		import classes.Drawable.Screen.Block.Textfield.LabelInput
 		import classes.Drawable.Screen.Block.Textfield.FocusedInputEventHandler
+		import classes.Drawable.Screen.Block.Textfield.AbstractFocusedInputEventHandler
 
 		import classes.Drawable.Screen.Block.Textfield.Paragraph
 		import classes.Drawable.Screen.Block.Textfield.Paragraph.Paragraph

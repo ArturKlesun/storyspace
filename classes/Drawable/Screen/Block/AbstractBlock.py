@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import pygame
 from classes.Constants import Constants
 
 from classes.Drawable.AbstractDrawable import AbstractDrawable
@@ -8,7 +9,6 @@ import classes as huj
 class AbstractBlock(AbstractDrawable):
 
 	DEFAULT_SIZE = [200,200]
-	DISPLAY_STATUS_BAR = False
 
 	def __init__(self, parentScreen, blockData={}):
 		super(AbstractBlock, self).__init__(parentScreen)
@@ -26,6 +26,18 @@ class AbstractBlock(AbstractDrawable):
 	def setObjectStateInherited(self, blockData: dict):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
+	@abstractmethod
+	def recalcSurfaceInherited(self):
+		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+
+	@overrides(AbstractDrawable)
+	def recalcSurface(self):
+		frameColor = [0,255,0] if self is self.getParent().getFocusedBlock() else [127,127,127]
+		self.surface.fill(frameColor)
+		self.recalcSurfaceInherited()
+		if self.isResizeCornerPointed:
+			pygame.draw.circle(self.surface, [0,0,255], [self.width, self.height], Constants.RESIZE_CORNER_RADIUS, 0)
+
 	@overrides(AbstractDrawable)
 	def recalcSize(self):
 		pass
@@ -33,6 +45,11 @@ class AbstractBlock(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def getDefaultSize(self):
 		return self.__class__.DEFAULT_SIZE
+
+	@overrides(AbstractDrawable)
+	def destroy(self):
+		self.getParent().releaseFocusedBlock()
+		super(AbstractBlock, self).destroy()
 
 	def getObjectState(self):
 		objectState = {'pos': self.pos(), 'size': self.size(), 'blockClass': self.__class__.__name__}
@@ -50,8 +67,8 @@ class AbstractBlock(AbstractDrawable):
 		mousePos = self.getParent().calcMouseAbsolutePos()
 		cornerPos = vectorSum(self.pos(), [self.width, self.height])
 
-		result = distanceBetween(mousePos, cornerPos) <= Constants.RESIZE_CORNER_RADIUS
-		if result != self.isResizeCornerPointed: # because we can
+		result = distanceBetween(mousePos, cornerPos) <= Constants.RESIZE_CORNER_RADIUS and self.isPointed(mousePos)
+		if result != self.isResizeCornerPointed:
 				self.isResizeCornerPointed = result
 				self.recalcSurfaceBacursively()
 
@@ -73,20 +90,3 @@ class AbstractBlock(AbstractDrawable):
 			defocused.recalcSurfaceBacursively()
 		self.recalcSurfaceBacursively()
 
-	# stupid ide
-
-	@abstractmethod
-	def getEventHandler(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def getSurface(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def recalcSurface(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def getFocusedChild(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
