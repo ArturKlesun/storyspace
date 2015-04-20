@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from classes.ClassImporter import ClassImporter
-
-ClassImporter.importAllClasses()
-
 from classes.Config import Config
 from classes.Drawable.Screen.Screen import Screen
 from classes.TimerHandler import TimerHandler
 
 Config.getInstance()
-eventHandler = Screen.getInstance().getEventHandler()
+eventHandler = Screen.getInstance().makeHandler()
 timerHandler = TimerHandler(eventHandler)
 
-while 1:
+while True:
 	timerHandler.handleFrame()

@@ -2,13 +2,15 @@ import pygame
 from pygame.constants import *
 
 from classes.Drawable.AbstractDrawable import AbstractDrawable
+from classes.Drawable.Combo import Combo
+from classes.Drawable.Screen.Block.ImageBlock import ImageBlock
+from classes.Drawable.Screen.Block.TextBlock import TextBlock
 from classes.Drawable.Screen.Dialog.Dialog import Dialog
 from classes.Drawable.Screen.Dialog.IDialogCaller import IDialogCaller
+from classes.Drawable.Screen.ScreenHandler import ScreenHandler
 from classes.Fp import isRectInRect, vectorSum, overrides, vectorMult, vectorDiff
 from classes.Drawable.Screen.Block.AbstractBlock import AbstractBlock
 from classes.Constants import Constants
-import classes as huj
-
 
 class Screen(AbstractDrawable):
 
@@ -16,9 +18,6 @@ class Screen(AbstractDrawable):
 	CAM_STEP_PER_FRAME = 25
 	SCALE_CHANGE_STEP = 0.1
 	DEFAULT_WINDOW_SIZE = [600,400]
-
-	CUR_MOUSE_POS = [0,0]
-	IS_FULLSCREEN = False
 
 	instance = None
 	lastSize = (400,400)
@@ -28,8 +27,9 @@ class Screen(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def __init__(self):
 		self.scaleKoef = 1.0
-		self.focusedBlock = None
 		self.camPos([0,0])
+		self.isFullscreen = False
+		self.curMousePos = [0,0] # TODO: kinda deprecated
 
 		super(Screen, self).__init__(None)
 
@@ -38,7 +38,7 @@ class Screen(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def recalcSurface(self):
 		# TODO: do it without tmpSurface one day, i.e. drawing each minimized child separately maybe
-		tmpSurface = pygame.Surface( vectorMult(self.size(), self.scaleKoef**-1) )
+		tmpSurface = pygame.Surface( vectorMult(self.size(), self.scaleKoef**-1) ) # 50% processor time MAZAFAKAAAAA
 		tmpSurface.fill([0,0,0])
 		for block in self.getBlockInFrameList():
 			tmpSurface.blit(block.getSurface(), vectorDiff( block.pos(), self.camPos() ) )
@@ -48,17 +48,14 @@ class Screen(AbstractDrawable):
 			pygame.transform.smoothscale(tmpSurface, self.size())
 				if self.scaleKoef > 0.5 else pygame.transform.scale(tmpSurface, self.size()), [0,0])
 
-	@overrides(AbstractDrawable)
 	def recalcSize(self):
-		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.IS_FULLSCREEN else FULLSCREEN))
+		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.getIsFullscreen() else FULLSCREEN))
 
 	@overrides(AbstractDrawable)
-	def getEventHandler(self):
-		return huj.Drawable.Screen.FocusedScreenEventHandler.FocusedScreenEventHandler(self)
+	def makeHandler(self): return ScreenHandler(self)
 
 	@overrides(AbstractDrawable)
-	def getFocusedChild(self):
-		return self.getFocusedBlock()
+	def getChildList(self): return self.getChildBlockList()
 
 	@overrides(AbstractDrawable)
 	def getDefaultSize(self):
@@ -77,25 +74,16 @@ class Screen(AbstractDrawable):
 			Screen.instance = Screen()
 		return Screen.instance
 
-	def switchFullscreen(self):
-		if not Screen.IS_FULLSCREEN:
-			self.lastSize = self.size()
-			self.size(Constants.MONITOR_RESOLUTION)
-		else:
-			self.size(self.lastSize)
-
-		Screen.IS_FULLSCREEN = not Screen.IS_FULLSCREEN
-		self.recalcSize()
-
 	# cam methods
 
-	def calcMouseAbsolutePos(self):
-		return vectorSum( vectorMult(Screen.CUR_MOUSE_POS, self.scaleKoef**-1), self.camPos())
+	def fitPointToScale(self, point: list):
+		return vectorMult(point, self.scaleKoef**-1)
 
-	def scale(self, koef):
-		# TODO: move cam so that scale was centered
-		self.scaleKoef *= 1.5**koef
-		self.recalcSurfaceRecursively(0)
+	def getScaledVector(self, wasPoint: list, becamePoint: list):
+		return vectorDiff(self.fitPointToScale(becamePoint), self.fitPointToScale(wasPoint))
+
+	def calcMouseAbsolutePos(self, realMousePos):
+		return vectorSum( vectorMult(realMousePos, self.scaleKoef**-1), self.camPos())
 
 	def moveCam(self, vector):
 		self.camPos( vectorSum(self.camPos(), vector) )
@@ -119,30 +107,49 @@ class Screen(AbstractDrawable):
 
 	# child block methods
 
-	def getFocusedBlock(self):
-		""":rtype: classes.Drawable.Screen.Block.AbstractBlock"""
-		return self.focusedBlock
-
-	def setFocusedBlock(self, value):
-		self.focusedBlock = value
-
 	def getChildBlockList(self):
 		return [block for block in self.childList if isinstance(block, AbstractBlock)]
 
-	def reconstruct(self, blockDataList):
-		self.clearBlockList()
-		for blockData in blockDataList:
-			AbstractBlock.makeSuccessorByData(self, blockData)
+	def getObjectState(self):
+		return {'jsonStructureFormatVersion': Constants.LAST_JSON_STRUCTURE_FORMAT_VERSION,
+				'blockDataList': [b.getObjectState() for b in self.getChildBlockList()],}
 
-	def clearBlockList(self):
-		del self.childList[:]
+	@overrides(AbstractDrawable)
+	def setObjectState(self, screenData):
+		self.clearBlockList()
+		if isinstance(screenData, list): # legacy
+			self.jsonStructureFormatVersion = Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION # just till legacy removed
+			for blockData in screenData:
+				BlockClass = self.getBlockClass(blockData['blockClass'])
+				BlockClass(self).setObjectState(blockData)
+		else:
+			self.jsonStructureFormatVersion = screenData['jsonStructureFormatVersion']
+			for blockData in screenData['blockDataList']:
+				BlockClass = self.getBlockClass(blockData['blockClass'])
+				BlockClass(self).setObjectState(blockData)
+
+	@staticmethod
+	def getBlockClass(className: str):
+		""":rtype: classes.Drawable.Screen.Block.AbstractBlock"""
+		for childClass in Screen.getChildClassList():
+			if className == childClass.__name__: return childClass
+		raise Exception("Unknown Block Class: [" + className + "]")
+
+	@staticmethod
+	def getChildClassList():
+		return [TextBlock, ImageBlock]
+
+	def getFocusedBlock(self):
+		""":rtype: classes.Drawable.Screen.Block.AbstractBlock.AbstractBlock"""
+		return self.getFocusedChild()
+
+	def clearBlockList(self): del self.childList[:]
 
 	def releaseFocusedBlock(self):
-		defocused = self.getFocusedBlock()
-		self.setFocusedBlock(None)
-		if defocused is not None:
+		if self.getFocusedIndex() > -1:
+			defocused = self.getFocusedBlock()
+			self.setFocusedIndex(-1)
 			defocused.recalcSurfaceBacursively()
-			defocused.getSurface()
 
 	# child dialog methods
 
@@ -151,8 +158,25 @@ class Screen(AbstractDrawable):
 			self.getDialog().destroy()
 		Dialog(self, interceptor, params)
 
-	# getters/setters
+	# general purpose getters
+
+	def getIsFullscreen(self): return self.isFullscreen
+	def setIsFullscreen(self, value: bool):
+		self.isFullscreen = value
+		return self
+
+	def getCurMousePos(self): return self.curMousePos
+	def setCurMousePos(self, value: list):
+		self.curMousePos = value
+		return self
 
 	def getDialog(self) -> Dialog:
 		dialogList = [dialog for dialog in self.childList if isinstance(dialog, Dialog)]
 		return dialogList[0] if len(dialogList) else None
+
+	# field getters/setters
+
+	def getScaleKoef(self): return self.scaleKoef
+	def setScaleKoef(self, value: int):
+		self.scaleKoef = value
+		return self

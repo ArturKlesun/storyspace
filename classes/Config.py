@@ -4,6 +4,7 @@ import pygame
 
 import classes
 from classes.Constants import Constants
+from classes.Drawable.AbstractDrawable import AbstractDrawable
 
 
 class Config(object):
@@ -43,17 +44,15 @@ class Config(object):
 
 		return self.imageDict[imageName]
 
-	def saveToFile(self):
+	def saveToFile(self, rootObject: AbstractDrawable):
+		rootObjectState = rootObject.getObjectState() # TODO: AbstractDrawable does not have it
 		fileObj = open(self.contentFolderPath + 'storyspaceContent.json', 'w', encoding='utf-8')
-		fileContent= [];
-		for block in classes.Drawable.Screen.Screen.Screen.getInstance().getChildBlockList():
-			fileContent.append(block.getObjectState())
-		fileObj.write(json.dumps(fileContent, ensure_ascii=False, indent=2))
+		fileObj.write(json.dumps(rootObjectState, ensure_ascii=False, indent=2))
 		fileObj.close()
 
-	def readDataFromFile(self):
+	def readFromFile(self, rootObject: AbstractDrawable):
 		fileObj = open(self.contentFolderPath + 'storyspaceContent.json', 'r', encoding='utf-8')
-		huj = fileObj.read()
+		jsData = fileObj.read()
 		fileObj.close()
-		data = json.loads(huj)
-		return data
+		data = json.loads(jsData)
+		rootObject.setObjectState(data)

@@ -2,15 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import pygame
+from classes.Drawable.Combo import Combo
 
 from classes.Drawable.Screen.Block.AbstractBlock import AbstractBlock
-from classes.Drawable.Screen.Block.Textfield.AbstractInput import AbstractInput
-from classes.Drawable.Screen.Block.Textfield.LabelInput import LabelInput
+from classes.Drawable.Screen.Block.AbstractBlockHandler import AbstractBlockHandler
+from classes.Drawable.Screen.Block.Input.Header import Header
+from classes.Drawable.Screen.Block.Input.LabelInput import LabelInput
 from classes.Fp import *
-from classes.Drawable.Screen.Block.Textfield.Textfield import Textfield
+from classes.Drawable.Screen.Block.Input.Textfield import Textfield
 from classes.Constants import Constants
 from classes.Drawable.AbstractDrawable import AbstractDrawable
-import classes as huj
 
 
 class TextBlock(AbstractBlock):
@@ -21,25 +22,17 @@ class TextBlock(AbstractBlock):
 
 	rate = 0
 
-	def __init__(self, parentScreen, blockData={}):
+	def __init__(self, parentScreen):
 		self.childTextfield = None
-		self.childStatusInput = None
+		self.childHeader = None
 		self.childLabelInput = None
-		self.focusedInput = None
 
-		super(TextBlock, self).__init__(parentScreen, blockData)
+		super(TextBlock, self).__init__(parentScreen)
 
-		self.getChildStatusInput().setTextBgColor([191,191,191])
-		self.getChildStatusInput().setTextColor([127,63,0])
-		self.focusedInput = self.getChildTextfield()
-
-
-	def __str__(self):
-		return 'Block: ' + str(self.getChildTextfield())
-
-	def __repr__(self):
-		return self.__str__() + '\n'
-
+		self.childTextfield = Textfield(self)
+		self.childHeader = Header(self)
+		self.childLabelInput = LabelInput(self)
+		self.setFocusedIndex(self.getChildList().index(self.childTextfield))
 
 	@overrides(AbstractBlock)
 	def recalcSurfaceInherited(self):
@@ -50,74 +43,62 @@ class TextBlock(AbstractBlock):
 			self.getChildTextfield().drawOnParent()
 
 	@overrides(AbstractBlock)
-	def getObjectStateInherited(self):
-		return {'rate': self.rate, 'statusString': self.getChildStatusInput().getParagraphTextList(),
-				'paragraphTextList': self.getChildTextfield().getParagraphTextList(), 'labelList': self.getChildLabelInput().labelList}
+	def getObjectStateSuccessored(self):
+		return {'rate': self.rate, 'headerData': self.getChildHeader().getObjectState(),
+				'textfieldData': self.getChildTextfield().getObjectState(), 'labelInputData': self.getChildLabelInput().getObjectState()}
 
 	@overrides(AbstractBlock)
-	def setObjectStateInherited(self, blockData):
+	def setObjectStateSuccessored(self, blockData):
 		self.rate = blockData['rate'] if 'rate' in blockData else -1
-		for parText in (blockData['paragraphTextList'] if 'paragraphTextList' in blockData else []):
-			self.getChildTextfield().insertIntoText(parText + '\n')
-		self.getChildTextfield().deleteFromText(-1)
-		for parText in (blockData['statusString'] if 'statusString' in blockData else [TextBlock.DEFAULT_STATUS_STRING]):
-			self.getChildStatusInput().insertIntoText(parText + '\n')
-		self.getChildStatusInput().deleteFromText(-1)
-		for label in  blockData['labelList'] if 'labelList' in blockData else []:
-			self.getChildLabelInput().addLabel(label)
-		self.getChildLabelInput().setPointer(0)
-		self.getChildLabelInput().deleteLabel()
-
-		self.getChildTextfield().setPointerPar(0)
-		self.getChildTextfield().getCurPar().setPointerPos(0)
+		if self.getRootParent().jsonStructureFormatVersion == Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION: # legacy
+			self.getChildTextfield().setObjectState(blockData['paragraphTextList'])
+			self.getChildHeader().setObjectState(blockData['statusString'])
+			self.getChildLabelInput().setObjectState(blockData['labelList'])
+		else:
+			self.getChildTextfield().setObjectState(blockData['textfieldData'])
+			self.getChildHeader().setObjectState(blockData['headerData'])
+			self.getChildLabelInput().setObjectState(blockData['labelInputData'])
 
 	@overrides(AbstractDrawable)
-	def getEventHandler(self):
-		""":rtype: classes.Drawable.Screen.Block.FocusedTextBlockEventHandler.FocusedTextBlockEventHandler"""
-		return huj.Drawable.Screen.Block.FocusedTextBlockEventHandler.FocusedTextBlockEventHandler(self)
+	def makeHandler(self): return TextBlockHandler(self)
 
 	@overrides(AbstractDrawable)
-	def getFocusedChild(self) -> AbstractInput:
-		return self.getFocusedInput()
+	def getChildList(self):
+		return [self.getChildTextfield(), self.getChildHeader(), self.getChildLabelInput()]
 
 	@overrides(AbstractDrawable)
 	def getDefaultSize(self):
 		return self.__class__.DEFAULT_SIZE
 
+	@overrides(AbstractDrawable)
+	def recalcSize(self):
+		self.surface = self.surface = pygame.Surface(self.size())
+
 	# getters/setters
 
-	def getChildTextfield(self):
-		if self.childTextfield is None: self.childTextfield = Textfield(self)
-		return self.childTextfield
+	def getChildTextfield(self) -> Textfield: return self.childTextfield
+	def getChildHeader(self) -> Header: return self.childHeader
+	def getChildLabelInput(self) -> LabelInput: return self.childLabelInput
 
-	def getChildStatusInput(self):
-		if self.childStatusInput is None: self.childStatusInput = Textfield(self)
-		return self.childStatusInput
-
-	def getChildLabelInput(self):
-		if self.childLabelInput is None:
-			self.childLabelInput = LabelInput(self)
-		return self.childLabelInput
-
-	def getFocusedInput(self):
-		return self.focusedInput
+	def getFocusedInput(self): return self.getFocusedChild()
 
 	def switchFocus(self):
-		if self.focusedInput is self.getChildTextfield():
-			self.focusedInput = self.getChildStatusInput()
-		elif self.focusedInput is self.getChildStatusInput():
-			self.focusedInput = self.getChildLabelInput()
-		else:
-			self.focusedInput = self.getChildTextfield()
-
-		self.getChildTextfield().recalcSize()
-		self.recalcSurfaceBacursively()
+		if self.getFocusedIndex() == self.setFocusedIndex(self.getFocusedIndex() + 1):
+			self.setFocusedIndex(0)
+		return True
 
 	def calcTextfieldSize(self):
 		return (self.getWidth() - self.getTextfieldRightIndent() - Constants.BLOCK_FRAME_WIDTH,
-			self.getHeight() - (self.getFocusedInput().getHeight() if self.getFocusedInput() and self.getFocusedInput() is not self.childTextfield else 0) - Constants.BLOCK_FRAME_WIDTH * 2)
+			self.getHeight() - Constants.BLOCK_FRAME_WIDTH * 2)
 
 	def getTextfieldRightIndent(self):
 		# TODO: if scrollbar + scrollbar
 		return Constants.BLOCK_FRAME_WIDTH
 
+class TextBlockHandler(AbstractBlockHandler):
+	@classmethod
+	@overrides(AbstractBlockHandler)
+	def calcActionDict(cls, textBlockClass):
+		actionDict = AbstractBlockHandler.calcActionDict(textBlockClass)
+		actionDict.update({ Combo(pygame.KMOD_LCTRL, pygame.K_SLASH): textBlockClass.switchFocus, })
+		return actionDict
