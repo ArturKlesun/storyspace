@@ -10,15 +10,19 @@ class AbstractBlock(AbstractDrawable):
 
 	DEFAULT_SIZE = [200,200]
 
+	@overrides(AbstractDrawable)
 	def __init__(self, parentScreen):
 		self.isResizing = False
 		self.isResizeCornerPointed = False
-
 		super(AbstractBlock, self).__init__(parentScreen)
 
-		self.pos(parentScreen.camPos())
+
+	@overrides(AbstractDrawable)
+	def initDescendant(self):
+		self.pos(self.getParent().camPos())
 		self.acquireFocus()
 
+	@overrides(AbstractDrawable)
 	def getObjectState(self):
 		objectState = {'pos': self.pos(), 'size': self.size(), 'blockClass': self.__class__.__name__}
 		objectState.update(self.getObjectStateSuccessored())

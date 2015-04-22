@@ -7,10 +7,5 @@ class HeaderHandler(AbstractHandler):
 
 	@classmethod
 	@overrides(AbstractHandler)
-	def calcActionDict(cls, headerClass) -> dict: pass
+	def calcActionDict(cls, headerClass) -> dict: return {}
 
-	@overrides(AbstractHandler)
-	def handleSpecificEvent(self, event: dict): pass
-
-	@overrides(AbstractHandler)
-	def handleMouseEvent(self, event: dict): pass

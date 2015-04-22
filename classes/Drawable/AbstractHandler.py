@@ -23,14 +23,15 @@ class AbstractHandler(metaclass=ABCMeta):
 
 	def handlePygameEvent(self, event: pygame.event):
 		if event.type == pygame.KEYDOWN: self.handleKey(Combo.fromEvent(event))
-		elif event.type in self.MOUSE_EVENT_TYPE_LIST: self.handleMouseEvent(event)
-		else: self.handleSpecificEvent(event)
+		else:
+			if event.type in self.MOUSE_EVENT_TYPE_LIST: self.handleMouseEvent(event)
+			else: self.handleSpecificEvent(event)
+			if self.getContext().getFocusedChild() is not None:
+				self.getContext().getFocusedChild().getHandler().handlePygameEvent(event)
 
-		if self.getContext() is self.getContext().getRootParent(): # TODO: temporary solution. should think something about these events
-			if self.getContext().getRootParent().getDialog() is not None:
-				self.getContext().getRootParent().getDialog().getHandler().handlePygameEvent(event)
-		if self.getContext().getFocusedChild() is not None:
-			self.getContext().getFocusedChild().getHandler().handlePygameEvent(event)
+		# if self.getContext() is self.getContext().getRootParent(): # TODO: temporary solution. should think something about these events
+		# 	if self.getContext().getRootParent().getDialog() is not None:
+		# 		self.getContext().getRootParent().getDialog().getHandler().handlePygameEvent(event)
 
 	def handleKey(self, combo: Combo) -> bool:
 		child = self.getContext().getFocusedChild()
@@ -41,12 +42,10 @@ class AbstractHandler(metaclass=ABCMeta):
 		return combo in self.__class__.actionDict and self.__class__.actionDict.get(combo)(self.getContext())
 
 	# override me please!
-	def handleMouseEvent(self, event: Event):
-		pass
+	def handleMouseEvent(self, event: Event): pass
 
 	# override me please!
-	def handleSpecificEvent(self, event: Event):
-		pass
+	def handleSpecificEvent(self, event: Event): pass
 
 	def getContext(self):
 		""":rtype: classes.Drawable.AbstractDrawable.AbstractDrawable"""

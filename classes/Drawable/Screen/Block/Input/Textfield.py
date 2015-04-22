@@ -20,68 +20,50 @@ class Textfield(AbstractDrawable):
 	
 	def __init__(self, parentBlock):
 		self.scrollPos = 0
+		self.paragraphList = []
 
 		super(Textfield, self).__init__(parentBlock)
 
-		self.paragraphList = []
+		Paragraph(self)
+		self.setFocusedIndex(0)
 		self.scrollPos = 0
 
 		self.setTextColor([0,0,0])
 		self.setTextBgColor([255,255,255])
 
-	def __str__(self):
-		return '\n\t' + 'Textfield: ' + str(self.getParagraphList())
-
 	# abstract method implementation
 
 	@overrides(AbstractDrawable)
-	def size(self, value = None):
-		return self.getParentBlock().calcTextfieldSize()
-
-	@overrides(AbstractDrawable)
-	def getChildList(self):
-		return self.getParagraphList()
-
+	def size(self, value = None): return self.getParentBlock().calcTextfieldSize()
 	@overrides(AbstractDrawable)
 	def makeHandler(self): return TextfieldHandler(self)
 
-	@overrides(AbstractDrawable)
-	def getDefaultSize(self):
-		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
-
-	def getObjectState(self):
-		return {'paragraphDataList': [par.getObjectState() for par in self.getParagraphList()]}
+	def getObjectState(self): return {'paragraphDataList': [par.getObjectState() for par in self.getParagraphList()]}
 
 	@overrides(AbstractDrawable)
 	def setObjectState(self, paragraphDataList):
+		self.clearChildList()
 		if self.getRootParent().jsonStructureFormatVersion == Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION: # legacy
-			for parText in paragraphDataList:
-				self.insertIntoText(parText + '\n')
-			self.deleteFromText(-1) # -_-
+			for parText in paragraphDataList[::-1]:
+				Paragraph(self).setText(parText)
 		else:
 			for paragraphData in paragraphDataList['paragraphDataList'][::-1]:
 				Paragraph(self).setObjectState(paragraphData)
-		self.setPointerPar(0)
-		self.getCurPar().setPointerPos(0)
-		self.moveScrollToPointer()
 
 	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		self.surface = Surface(self.size())
+	def recalcSize(self): self.surface = Surface(self.size())
 
 	# operations with text
 
 	def getParagraphList(self):
-		return self.paragraphList
+		""":rtype: list of Paragraph"""
+		return self.getChildList()
 	
 	def getCurPar(self):
 		':rtype: Paragraph'
 		return self.getFocusedChild()
 
 	# operations with pointer
-
-	def movePar(self, n):
-		self.setPointerPar(self.getFocusedIndex() + n)
 
 	def getPointerRowAndCol(self):
 		resultRow = 0
@@ -90,12 +72,9 @@ class Textfield(AbstractDrawable):
 			resultRow += len(par.getRowList())
 		
 		pointerRow = self.getCurPar().getPointerRowIdx()
-		pointerShift = self.getCurPar().getPointerPos() % self.getCharInRowCount()
+		pointerShift = self.getCurPar().getFocusedIndex() % self.getCharInRowCount()
 		
 		return [resultRow + pointerRow, pointerShift]
-		
-	def setPointerPar(self, pointerPar: int):
-		self.setFocusedIndex(pointerPar)
 
 	def moveScrollToPointer(self):
 		pointerRow = self.getPointerRowAndCol()[0]
@@ -111,11 +90,11 @@ class Textfield(AbstractDrawable):
 		parIdx = 0
 		rowIdx = 0
 		while scrollPos > 0 and parIdx < len(self.getParagraphList()):
-			scrollPos -= len(self.paragraphList[parIdx].getRowList())
+			scrollPos -= len(self.getChildList()[parIdx].getRowList())
 			parIdx += 1
 		if scrollPos < 0:
 			parIdx -= 1
-			rowIdx = len(self.paragraphList[parIdx].getRowList()) + scrollPos
+			rowIdx = len(self.getChildList()[parIdx].getRowList()) + scrollPos
 
 		return parIdx, rowIdx;
 
@@ -142,9 +121,9 @@ class Textfield(AbstractDrawable):
 		
 		y = - rowIdx * Constants.CHAR_HEIGHT
 		while y < self.getHeight() and parIdx < len(self.getParagraphList()):
-			bitmapHeight = len(self.paragraphList[parIdx].getRowList()) * Constants.CHAR_HEIGHT
-			self.paragraphList[parIdx].setTop(y)
-			self.paragraphList[parIdx].drawOnParent()
+			bitmapHeight = len(self.getChildList()[parIdx].getRowList()) * Constants.CHAR_HEIGHT
+			self.getChildList()[parIdx].setTop(y)
+			self.getChildList()[parIdx].drawOnParent()
 			y += bitmapHeight
 			parIdx += 1
 
@@ -187,9 +166,9 @@ class Textfield(AbstractDrawable):
 			return True
 		else: return False
 	def mergeNext(self):
-		if self.getFocusedIndex() < self.getParagraphList() - 1:
+		if self.getFocusedIndex() < len(self.getParagraphList()) - 1:
 			textToPrepend = self.getCurPar().getText()
-			self.getParagraphList().remove(self.getFocusedIndex())
+			self.getChildList().remove(self.getFocusedIndex())
 			self.getCurPar().prepend(textToPrepend)
 			return True
 		else: return False
@@ -197,10 +176,10 @@ class Textfield(AbstractDrawable):
 	def rowUp(self):
 		pointerShift = self.getPointerRowAndCol()[1]
 		self.focusBack()
-		self.getCurPar().setPointerPos( (len(self.getCurPar().getRowList()) - 1) * self.getCharInRowCount() + pointerShift )
+		self.getCurPar().setFocusedIndex( (len(self.getCurPar().getRowList()) - 1) * self.getCharInRowCount() + pointerShift )
 	def rowDown(self):
 		pointerShift = self.getPointerRowAndCol()[1]
-		self.movePar(1)
-		self.getCurPar().setPointerPos(pointerShift)
+		self.setFocusedIndex(self.getFocusedIndex() + 1)
+		self.getCurPar().setFocusedIndex(pointerShift)
 
 

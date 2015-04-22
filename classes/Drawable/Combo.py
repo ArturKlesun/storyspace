@@ -18,13 +18,12 @@ class Combo(object):
 		return Combo(keyMods, event.key)
 
 	@staticmethod
-	def getCharacterKeycodeList():
-		return range(32, 123) # 122 - z, 32 - space
+	def getCharacterKeycodeList(): return range(32, 123) # 122 - z, 32 - space
 
 	@overrides(object)
-	def __hash__(self) -> int:
-		return int((self.keyCode << 4) + self.keyMods);
+	def __hash__(self):
+		return hash((self.keyMods, self.keyCode))
 
 	@overrides(object)
 	def __eq__(self, other):
-		return self.__hash__() == other.__hash__()
+		return self.keyMods == other.keyMods and self.keyCode == other.keyCode

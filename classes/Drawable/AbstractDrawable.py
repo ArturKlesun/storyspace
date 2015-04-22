@@ -16,42 +16,27 @@ class AbstractDrawable(metaclass=ABCMeta):
 		self.focusedIndex = -1
 		self.surface = pygame.Surface(self.getDefaultSize())
 		self.surfaceChanged = True
-
-		if not self.getParent() is None: self.getParent().childList.append(self)
 		self.handler = self.makeHandler()
+		if not self.getParent() is None: self.getParent().childList.insert(self.getParent().getFocusedIndex() + 1, self)
+
+		self.initDescendant()
+		self.postInit()
+
+	def postInit(self):
 		self.size(self.getDefaultSize())
 		self.pos([0,0])
 
-		self.recalcSurfaceBacursively()
+	# override me please!
+	def initDescendant(self): pass
 
 	# abstract methods
 
 	@abstractmethod
-	def recalcSize(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def recalcSurface(self):
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
+	def recalcSurface(self): raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
 	@abstractmethod
 	def makeHandler(self):
 		""":rtype: classes.Drawable.AbstractHandler.AbstractHandler"""
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def getChildList(self):
-		""":rtype: list of AbstractDrawable"""
-		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	# cuz it may be final
-	# @abstractmethod
-	# def getFocusedChild(self):
-	# 	""":rtype: AbstractDrawable"""
-	# 	raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
-
-	@abstractmethod
-	def getDefaultSize(self):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
 	@abstractmethod
@@ -62,17 +47,23 @@ class AbstractDrawable(metaclass=ABCMeta):
 	def setObjectState(self, objectData):
 		raise NotImplementedError("Please Implement this method for " + self.__class__.__name__)
 
+	# override me please if you depend on parent's size!
+	def recalcSize(self): pass
+	# override me please if you don't depend on parent's size!
+	def getDefaultSize(self):
+		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
+
 	# final methods
+
+	# it is still not final for Textfield - fuck
+	def getChildList(self):
+		""":rtype: list of AbstractDrawable"""
+		return self.childList
+
+	def clearChildList(self): del self.getChildList()[:]
 
 	def drawOnParent(self, shiftVector=[0,0]):
 		self.getParent().surface.blit(self.getSurface(), vectorSum(self.pos(), vectorReverse(shiftVector)))
-
-	# TODO: this method must not exist
-	def recalcSurfaceRecursively(self, n=0):
-		self.surfaceChanged = True
-		if n == 0: return
-		for child in self.childList:
-			child.recalcSurfaceRecursively(n - 1)
 	
 	def recalcSurfaceBacursively(self):
 		self.surfaceChanged = True
@@ -85,11 +76,8 @@ class AbstractDrawable(metaclass=ABCMeta):
 
 	# getters
 
-	def isPointed(self, pointerPos):
-		return isPointInRect(pointerPos,(self.left, self.top, self.width, self.height) )
-
-	def getAbsolutePos(self):
-		return vectorSum(self.getParent().getAbsolutePos(), self.pos())
+	def isPointed(self, pointerPos): return isPointInRect(pointerPos,(self.left, self.top, self.width, self.height) )
+	def getAbsolutePos(self): return vectorSum(self.getParent().getAbsolutePos(), self.pos())
 
 	def getRootParent(self): # love you recursion
 		""":rtype: classes.Drawable.Screen.Screen.Screen"""
@@ -119,14 +107,17 @@ class AbstractDrawable(metaclass=ABCMeta):
 		return self.focusedIndex
 
 	def setFocusedIndex(self, value: int):
-		if value < -1: value = -1
+		if value < 0 < len(self.getChildList()): value = 0
+		elif value < -1: value = -1
 		if value >= len(self.getChildList()): value = len(self.getChildList()) - 1
+		defocused = self.getFocusedChild()
 		self.focusedIndex = value
-		self.recalcSurfaceBacursively()
+		if defocused is not None: defocused.recalcSurfaceBacursively()
+		self.getFocusedChild().recalcSurfaceBacursively()
 		return self
 
 	def getFocusedChild(self):
-		if self.getFocusedIndex() > -1: return self.getChildList()[self.getFocusedIndex()]
+		if self.getFocusedIndex() > -1 and len(self.getChildList()) > 0: return self.getChildList()[self.getFocusedIndex()]
 		else: return None
 
 	# transformations
@@ -154,28 +145,18 @@ class AbstractDrawable(metaclass=ABCMeta):
 
 			for child in self.childList:
 				child.recalcSize()
+				child.recalcSurfaceBacursively()
 
 		return self.width, self.height
 
-	def setTop(self, value):
-		self.top = value
-
-	def setLeft(self, value):
-		self.left = value
-
-	def getWidth(self):
-		return self.size()[0]
-
-	def setWidth(self, value):
-		self.size([value, self.size()[1]])
-
-	def getHeight(self):
-		return self.size()[1]
-
-	def setHeight(self, value):
-		self.size([self.size()[0], value])
+	def setTop(self, value): self.top = value
+	def setLeft(self, value): self.left = value
+	def getWidth(self): return self.size()[0]
+	def setWidth(self, value): self.size([value, self.size()[1]])
+	def getHeight(self): return self.size()[1]
+	def setHeight(self, value): self.size([self.size()[0], value])
 
 	# event handles
 
-	def focusNext(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getFocusedIndex + 1).getFocusedIndex()
-	def focusBack(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getFocusedIndex - 1).getFocusedIndex()
+	def focusNext(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getFocusedIndex() + 1).getFocusedIndex()
+	def focusBack(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getFocusedIndex() - 1).getFocusedIndex()

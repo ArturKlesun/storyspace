@@ -31,18 +31,13 @@ class AbstractBlockHandler(AbstractHandler):
 				self.getBlock().isResizing = True
 
 		elif event.type == pygame.MOUSEBUTTONUP:
-			if self.getBlock().isResizing:
-				self.getBlock().recalcSurfaceRecursively(-1)
-				self.getBlock().isResizing = False
+			if self.getBlock().isResizing: self.getBlock().isResizing = False
 
 		elif event.type == pygame.MOUSEMOTION:
 
 			if event.buttons[0]: # left mouse button hold
-				if self.getBlock().isResizing:
-					self.getBlock().sizeAddVector(mouseVector)
-					self.getBlock().recalcSurfaceRecursively(1)
-				else:
-					self.getBlock().posAddVector(mouseVector)
+				if self.getBlock().isResizing: self.getBlock().sizeAddVector(mouseVector)
+				else: self.getBlock().posAddVector(mouseVector)
 
 			self.getBlock().calcIsResizeCornerPointed(event.pos)
 			self.lastMousePos = event.pos

@@ -59,6 +59,6 @@ class ImageBlockHandler(AbstractBlockHandler):
 	@classmethod
 	@overrides(AbstractBlockHandler)
 	def calcActionDict(cls, imageBlockClass):
-		actionDict = super(ImageBlockHandler).calcActionDict(imageBlockClass)
+		actionDict = AbstractBlockHandler.calcActionDict(imageBlockClass)
 		actionDict.update({ Combo(pygame.KMOD_LCTRL, pygame.K_v): imageBlockClass.setImageNameFromClipboard, })
 		return actionDict

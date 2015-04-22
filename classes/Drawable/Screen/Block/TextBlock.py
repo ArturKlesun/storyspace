@@ -22,78 +22,63 @@ class TextBlock(AbstractBlock):
 
 	rate = 0
 
-	def __init__(self, parentScreen):
-		self.childTextfield = None
-		self.childHeader = None
-		self.childLabelInput = None
-
-		super(TextBlock, self).__init__(parentScreen)
-
-		self.childTextfield = Textfield(self)
-		self.childHeader = Header(self)
-		self.childLabelInput = LabelInput(self)
-		self.setFocusedIndex(self.getChildList().index(self.childTextfield))
+	@overrides(AbstractBlock)
+	def initDescendant(self):
+		super(TextBlock, self).initDescendant()
+		Textfield(self)
+		Header(self)
+		LabelInput(self)
+		self.setFocusedIndex(0)
 
 	@overrides(AbstractBlock)
 	def recalcSurfaceInherited(self):
-		self.getFocusedInput().pos([Constants.BLOCK_FRAME_WIDTH, Constants.BLOCK_FRAME_WIDTH])
-		self.getFocusedInput().drawOnParent()
-		if self.getFocusedInput() is not self.getChildTextfield():
-			self.getChildTextfield().pos([Constants.BLOCK_FRAME_WIDTH, self.getFocusedInput().getHeight() + Constants.BLOCK_FRAME_WIDTH])
-			self.getChildTextfield().drawOnParent()
+		self.getFocusedChild().pos([Constants.BLOCK_FRAME_WIDTH, Constants.BLOCK_FRAME_WIDTH])
+		self.getFocusedChild().drawOnParent()
+		# if self.getFocusedInput() is not self.getChildTextfield():
+		# 	self.getChildTextfield().pos([Constants.BLOCK_FRAME_WIDTH, self.getFocusedInput().getHeight() + Constants.BLOCK_FRAME_WIDTH])
+		# 	self.getChildTextfield().drawOnParent()
 
 	@overrides(AbstractBlock)
 	def getObjectStateSuccessored(self):
-		return {'rate': self.rate, 'headerData': self.getChildHeader().getObjectState(),
-				'textfieldData': self.getChildTextfield().getObjectState(), 'labelInputData': self.getChildLabelInput().getObjectState()}
+		state = {'rate': self.rate}
+		for child in self.getChildList(): state.update({child.__class__.__name__: child.getObjectState()})
+		return state
 
 	@overrides(AbstractBlock)
 	def setObjectStateSuccessored(self, blockData):
+		self.clearChildList()
 		self.rate = blockData['rate'] if 'rate' in blockData else -1
 		if self.getRootParent().jsonStructureFormatVersion == Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION: # legacy
-			self.getChildTextfield().setObjectState(blockData['paragraphTextList'])
-			self.getChildHeader().setObjectState(blockData['statusString'])
-			self.getChildLabelInput().setObjectState(blockData['labelList'])
+			Textfield(self).setObjectState(blockData['paragraphTextList'])
+			Header(self).setObjectState(blockData['statusString'])
+			LabelInput(self).setObjectState(blockData['labelList'])
 		else:
-			self.getChildTextfield().setObjectState(blockData['textfieldData'])
-			self.getChildHeader().setObjectState(blockData['headerData'])
-			self.getChildLabelInput().setObjectState(blockData['labelInputData'])
+			Textfield(self).setObjectState(blockData[Textfield.__name__])
+			Header(self).setObjectState(blockData[Header.__name__])
+			LabelInput(self).setObjectState(blockData[LabelInput.__name__])
 
 	@overrides(AbstractDrawable)
 	def makeHandler(self): return TextBlockHandler(self)
 
+	# TODO: final it in AbstractDrawable mazafaka
 	@overrides(AbstractDrawable)
 	def getChildList(self):
-		return [self.getChildTextfield(), self.getChildHeader(), self.getChildLabelInput()]
+		""":rtype: list of AbstractDrawable"""
+		return self.childList
 
 	@overrides(AbstractDrawable)
-	def getDefaultSize(self):
-		return self.__class__.DEFAULT_SIZE
+	def getDefaultSize(self): return self.__class__.DEFAULT_SIZE
 
 	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		self.surface = self.surface = pygame.Surface(self.size())
+	def recalcSize(self): self.surface = self.surface = pygame.Surface(self.size())
 
 	# getters/setters
 
-	def getChildTextfield(self) -> Textfield: return self.childTextfield
-	def getChildHeader(self) -> Header: return self.childHeader
-	def getChildLabelInput(self) -> LabelInput: return self.childLabelInput
-
-	def getFocusedInput(self): return self.getFocusedChild()
-
-	def switchFocus(self):
-		if self.getFocusedIndex() == self.setFocusedIndex(self.getFocusedIndex() + 1):
-			self.setFocusedIndex(0)
-		return True
+	def switchFocus(self): return self.focusNext() or self.setFocusedIndex(0) is not None # despicable me
 
 	def calcTextfieldSize(self):
-		return (self.getWidth() - self.getTextfieldRightIndent() - Constants.BLOCK_FRAME_WIDTH,
+		return (self.getWidth() - Constants.BLOCK_FRAME_WIDTH * 2,
 			self.getHeight() - Constants.BLOCK_FRAME_WIDTH * 2)
-
-	def getTextfieldRightIndent(self):
-		# TODO: if scrollbar + scrollbar
-		return Constants.BLOCK_FRAME_WIDTH
 
 class TextBlockHandler(AbstractBlockHandler):
 	@classmethod

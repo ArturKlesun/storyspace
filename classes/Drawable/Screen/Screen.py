@@ -19,7 +19,7 @@ class Screen(AbstractDrawable):
 	SCALE_CHANGE_STEP = 0.1
 	DEFAULT_WINDOW_SIZE = [600,400]
 
-	instance = None
+	instance = None # TODO: deprecated
 	lastSize = (400,400)
 
 	# abstract drawable's methods
@@ -48,22 +48,37 @@ class Screen(AbstractDrawable):
 			pygame.transform.smoothscale(tmpSurface, self.size())
 				if self.scaleKoef > 0.5 else pygame.transform.scale(tmpSurface, self.size()), [0,0])
 
-	def recalcSize(self):
-		self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.getIsFullscreen() else FULLSCREEN))
+	@overrides(AbstractDrawable)
+	def recalcSize(self): self.surface = pygame.display.set_mode(self.size(), HWSURFACE|DOUBLEBUF|(RESIZABLE if not self.getIsFullscreen() else FULLSCREEN))
 
 	@overrides(AbstractDrawable)
 	def makeHandler(self): return ScreenHandler(self)
+	# TODO: it should be final one day
+	@overrides(AbstractDrawable)
+	def getChildList(self): return self.childList
+	@overrides(AbstractDrawable)
+	def getDefaultSize(self): return Screen.DEFAULT_WINDOW_SIZE
+	@overrides(AbstractDrawable)
+	def getAbsolutePos(self): return 0,0
 
 	@overrides(AbstractDrawable)
-	def getChildList(self): return self.getChildBlockList()
+	def getObjectState(self):
+		return {'jsonStructureFormatVersion': Constants.LAST_JSON_STRUCTURE_FORMAT_VERSION,
+				'blockDataList': [b.getObjectState() for b in self.getChildBlockListCopy()],}
 
 	@overrides(AbstractDrawable)
-	def getDefaultSize(self):
-		return Screen.DEFAULT_WINDOW_SIZE
-
-	@overrides(AbstractDrawable)
-	def getAbsolutePos(self):
-		return 0,0
+	def setObjectState(self, screenData):
+		self.clearChildList()
+		if isinstance(screenData, list): # legacy
+			self.jsonStructureFormatVersion = Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION # just till legacy removed
+			for blockData in screenData:
+				BlockClass = self.getBlockClass(blockData['blockClass'])
+				BlockClass(self).setObjectState(blockData)
+		else:
+			self.jsonStructureFormatVersion = screenData['jsonStructureFormatVersion']
+			for blockData in screenData['blockDataList']:
+				BlockClass = self.getBlockClass(blockData['blockClass'])
+				BlockClass(self).setObjectState(blockData)
 
 	# class specific methods
 
@@ -76,18 +91,13 @@ class Screen(AbstractDrawable):
 
 	# cam methods
 
-	def fitPointToScale(self, point: list):
-		return vectorMult(point, self.scaleKoef**-1)
-
-	def getScaledVector(self, wasPoint: list, becamePoint: list):
-		return vectorDiff(self.fitPointToScale(becamePoint), self.fitPointToScale(wasPoint))
-
-	def calcMouseAbsolutePos(self, realMousePos):
-		return vectorSum( vectorMult(realMousePos, self.scaleKoef**-1), self.camPos())
+	def fitPointToScale(self, point: list): return vectorMult(point, self.scaleKoef**-1)
+	def getScaledVector(self, wasPoint: list, becamePoint: list): return vectorDiff(self.fitPointToScale(becamePoint), self.fitPointToScale(wasPoint))
+	def calcMouseAbsolutePos(self, realMousePos): return vectorSum( vectorMult(realMousePos, self.scaleKoef**-1), self.camPos())
 
 	def moveCam(self, vector):
 		self.camPos( vectorSum(self.camPos(), vector) )
-		self.recalcSurfaceRecursively(1)
+		self.recalcSurfaceBacursively()
 
 	def camPos(self, value=None):
 		if value:
@@ -103,30 +113,12 @@ class Screen(AbstractDrawable):
 		return indent, indent, self.getWidth() - indent * 2, self.getHeight() - indent * 2
 
 	def getBlockInFrameList(self):
-		return [block for block in self.getChildBlockList() if isRectInRect(self.getCamRect(), block.getRect())]
+		return [block for block in self.getChildBlockListCopy() if isRectInRect(self.getCamRect(), block.getRect())]
 
 	# child block methods
 
-	def getChildBlockList(self):
+	def getChildBlockListCopy(self):
 		return [block for block in self.childList if isinstance(block, AbstractBlock)]
-
-	def getObjectState(self):
-		return {'jsonStructureFormatVersion': Constants.LAST_JSON_STRUCTURE_FORMAT_VERSION,
-				'blockDataList': [b.getObjectState() for b in self.getChildBlockList()],}
-
-	@overrides(AbstractDrawable)
-	def setObjectState(self, screenData):
-		self.clearBlockList()
-		if isinstance(screenData, list): # legacy
-			self.jsonStructureFormatVersion = Constants.PARAGRAPH_NOT_OBJECT_FORMAT_VERSION # just till legacy removed
-			for blockData in screenData:
-				BlockClass = self.getBlockClass(blockData['blockClass'])
-				BlockClass(self).setObjectState(blockData)
-		else:
-			self.jsonStructureFormatVersion = screenData['jsonStructureFormatVersion']
-			for blockData in screenData['blockDataList']:
-				BlockClass = self.getBlockClass(blockData['blockClass'])
-				BlockClass(self).setObjectState(blockData)
 
 	@staticmethod
 	def getBlockClass(className: str):
@@ -143,7 +135,8 @@ class Screen(AbstractDrawable):
 		""":rtype: classes.Drawable.Screen.Block.AbstractBlock.AbstractBlock"""
 		return self.getFocusedChild()
 
-	def clearBlockList(self): del self.childList[:]
+	# @overrides(AbstractDrawable)
+	def clearChildList(self): del self.getChildList()[:]
 
 	def releaseFocusedBlock(self):
 		if self.getFocusedIndex() > -1:

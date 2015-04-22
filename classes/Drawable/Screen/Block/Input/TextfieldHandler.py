@@ -10,12 +10,12 @@ class TextfieldHandler(LabelInputHandler):
 	SCROLL_STEP = 4
 
 	def getTextfield(self):
-		""":rtype: classes.Drawable.Screen.Block.Input.Textfield"""
+		""":rtype: classes.Drawable.Screen.Block.Input.Textfield.Textfield"""
 		return self.getContext()
 
 	@classmethod
 	@overrides(LabelInputHandler)
-	def calcActionDict(cls, textfieldClass) -> dict: # you can pass here context class as well if any
+	def calcActionDict(cls, textfieldClass) -> dict:
 		p = pygame
 		ctrl = p.KMOD_LCTRL
 		return {
@@ -41,11 +41,5 @@ class TextfieldHandler(LabelInputHandler):
 	def handleMouseEvent(self, event: dict):
 		if event.type == pygame.MOUSEBUTTONUP:
 
-			if event.button == 4: # scroll-up
-				self.__class__.scrollUp(self.getTextfield())
-			elif event.button == 5: # scroll-down
-				self.__class__.scrollDown(self.getTextfield())
-
-	@overrides(LabelInputHandler)
-	def handleSpecificEvent(self, event: dict):
-		pass
+			if event.button == 4: self.getTextfield().scrollUp()
+			elif event.button == 5: self.getTextfield().scrollDown()

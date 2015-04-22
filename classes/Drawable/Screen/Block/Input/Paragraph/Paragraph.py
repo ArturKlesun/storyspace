@@ -16,8 +16,9 @@ class Paragraph(AbstractDrawable):
 		self.text = ''
 
 		super(Paragraph, self).__init__(parentTextfield)
-		parentTextfield.paragraphList.insert(parentTextfield.getFocusedIndex() + 1, self)
+		self.getParent().setFocusedIndex(self.getParent().getChildList().index(self))
 		self.recalcSize()
+		self.recalcSurfaceBacursively()
 
 	@overrides(AbstractDrawable)
 	def size(self, value = None):
@@ -37,8 +38,8 @@ class Paragraph(AbstractDrawable):
 
 		# drawing pointer
 		if self.getParent().getFocusedChild() is self:
-			pointerRow = self.getPointerPos() // self.getCharInRowCount()
-			pointerCol = self.getPointerPos() % self.getCharInRowCount()
+			pointerRow = self.ptr() // self.getCharInRowCount()
+			pointerCol = self.ptr() % self.getCharInRowCount()
 			pygame.draw.line(self.surface, [255,0,0],
 				[pointerCol * Constants.CHAR_WIDTH, pointerRow * Constants.CHAR_HEIGHT],
 				[pointerCol * Constants.CHAR_WIDTH, (pointerRow + 1) * Constants.CHAR_HEIGHT])
@@ -59,44 +60,30 @@ class Paragraph(AbstractDrawable):
 		return self
 
 	@overrides(AbstractDrawable)
-	def getChildList(self):
-		return []
-
-	@overrides(AbstractDrawable)
-	def getFocusedChild(self) -> AbstractDrawable:
-		return None
-
-	@overrides(AbstractDrawable)
-	def getDefaultSize(self):
-		return [Constants.CHAR_WIDTH, Constants.CHAR_HEIGHT]
-
-	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		pass
+	def getChildList(self): return []
 
 	# operations with pointer
 
-	# TODO: eliminate this name
-	def getPointerPos(self):
-		return self.getFocusedIndex()
-
-	# TODO: override instead of using bad name
-	def setPointerPos(self, pointerPos):
-		self.setFocusedIndex(pointerPos)
+	@overrides(AbstractDrawable)
+	def setFocusedIndex(self, value):
+		if value < -1: value = -1
+		if value >= len(self.getText()): value = len(self.getText()) - 1
+		self.focusedIndex = value
+		self.recalcSurfaceBacursively()
 		self.getParentTextfield().moveScrollToPointer()
 		return self
 
 	def cropToPointer(self):
-		return self.crop(0, self.getPointerPos())
+		return self.crop(0, self.ptr())
 
 	def cropFromPointer(self):
-		return self.crop(self.getPointerPos(), -1)
+		return self.crop(self.ptr(), -1)
 	
 	def getTextAfterPointer(self):
-		return self.text[self.getPointerPos():]
+		return self.text[self.ptr():]
 
 	def getTextBeforePointer(self):
-		return self.text[:self.getPointerPos()]
+		return self.text[:self.ptr()]
 
 	def cutAfterPointer(self):
 		cut = self.getTextAfterPointer()
@@ -115,7 +102,6 @@ class Paragraph(AbstractDrawable):
 		self.setText(self.getText()[l:r])
 		return self
 
-
 	def append(self, strToAppend):
 		self.setText(self.getText() + strToAppend)
 		return self
@@ -124,12 +110,9 @@ class Paragraph(AbstractDrawable):
 		self.setText(strToPrepend + self.getText())
 		return self
 
-	def getTextLen(self):
-		return len(self.getText()) + 1 # + 1 for eol
+	def getTextLen(self): return len(self.getText()) + 1 # + 1 for eol
 
-	def getText(self):
-		return self.text
-
+	def getText(self): return self.text
 	def setText(self, value):
 		self.text = value
 		self.recalcSurfaceBacursively()
@@ -138,7 +121,7 @@ class Paragraph(AbstractDrawable):
 	# bitmap operations
 
 	def getPointerRowIdx(self):
-		return self.getPointerPos() // self.getCharInRowCount()
+		return self.ptr() // self.getCharInRowCount()
 
 	def getCharInRowCount(self):
 		return self.getWidth() // Constants.CHAR_WIDTH
@@ -171,6 +154,11 @@ class Paragraph(AbstractDrawable):
 
 	# field setters
 
+	def ptr(self, value: int = None):
+		if value is not None:
+			self.setFocusedIndex(value - 1)
+		return self.getFocusedIndex() + 1
+
 	def setScore(self, n):
 		self.score = n
 		self.recalcSurfaceBacursively()
@@ -178,17 +166,17 @@ class Paragraph(AbstractDrawable):
 
 	def rowUp(self):
 		if len(self.getTextBeforePointer()) >= self.getCharInRowCount():
-			self.movePointer(-self.getCharInRowCount())
+			self.ptr(self.ptr() - self.getCharInRowCount())
 			return True
 		else: return False
 	def rowDown(self):
 		if self.getPointerRowIdx() < len(self.getRowList()) - 1:
-			self.setPointerPos(self.getPointerPos() + self.getCharInRowCount())
+			self.ptr(self.ptr() + self.getCharInRowCount())
 			return True
 		else: return False
 
-	def focusNextWord(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getNextWordIndex(1)).getFocusedIndex()
-	def focusBackWord(self): return self.getFocusedIndex() != self.setFocusedIndex(self.getNextWordIndex(-1)).getFocusedIndex()
+	def focusNextWord(self): return self.ptr() != self.setFocusedIndex(self.getNextWordIndex(1)).ptr()
+	def focusBackWord(self): return self.ptr() != self.setFocusedIndex(self.getNextWordIndex(-1)).ptr()
 
 	def getNextWordIndex(self, n):
 		# TODO: broken, it calcs displacement now
@@ -204,17 +192,21 @@ class Paragraph(AbstractDrawable):
 
 	def insertIntoText(self, substr):
 		newParTextList = substr.split("\n")
-		newParTextList[-1] += self.cutReplaceAfterPointer(newParTextList.pop(0))
-		for parText in newParTextList[::-1]: Paragraph(self.getParent()).setText(parText)
+		appendToLast = self.cutReplaceAfterPointer(newParTextList.pop(0))
+		if len(newParTextList) > 0:
+			newParTextList[-1] += appendToLast
+			for parText in newParTextList[::-1]: Paragraph(self.getParent()).setText(parText)
+		else: self.append(appendToLast)
+		self.ptr(self.ptr() + len(substr))
 
 	def deleteBack(self):
-		if self.getFocusedIndex() > 0:
-			self.setText(self.getText()[:self.getFocusedIndex() - 1] + self.getText()[self.getFocusedIndex():])
-			self.setFocusedIndex(self.getFocusedIndex() - 1)
+		if self.ptr() > 0:
+			self.setText(self.getText()[:self.ptr() - 1] + self.getText()[self.ptr():])
+			self.ptr(self.ptr() - 1)
 			return True
 		else: return False
 	def deleteNext(self):
-		if self.getFocusedIndex() < len(self.getText()) - 1:
-			self.setText(self.getText()[:self.getFocusedIndex()] + self.getText()[self.getFocusedIndex() + 1:])
+		if self.ptr() < len(self.getText()):
+			self.setText(self.getText()[:self.ptr()] + self.getText()[self.ptr() + 1:])
 			return True
 		else: return False
