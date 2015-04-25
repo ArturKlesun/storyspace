@@ -68,6 +68,7 @@ class ScreenHandler(AbstractHandler):
 				self.getScreen().releaseFocusedBlock()
 				if len(pointedBlockList):
 					pointedBlockList[0].acquireFocus() # TODO: z-index
+					self.getScreen().getFocusedBlock().getHandler().lastMousePos = event.pos
 
 			elif event.button == 4 and bitMask & pygame.KMOD_LCTRL: # scroll-up
 				self.getScreen().scale(+1)

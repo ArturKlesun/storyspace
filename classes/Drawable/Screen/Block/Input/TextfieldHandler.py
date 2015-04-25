@@ -21,7 +21,7 @@ class TextfieldHandler(LabelInputHandler):
 		return {
 			Combo(0, p.K_LEFT): textfieldClass.focusBack,
 			Combo(0, p.K_RIGHT): textfieldClass.focusNext,
-			Combo(0, p.K_UP): textfieldClass.scrollUp,
+			Combo(0, p.K_UP): textfieldClass.rowUp,
 			Combo(0, p.K_DOWN): textfieldClass.rowDown,
 			Combo(0, p.K_BACKSPACE): textfieldClass.mergeBack,
 			Combo(0, p.K_DELETE): textfieldClass.mergeNext,

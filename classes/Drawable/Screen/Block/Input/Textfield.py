@@ -13,8 +13,6 @@ from classes.Drawable.AbstractDrawable import AbstractDrawable
 
 class Textfield(AbstractDrawable):
 
-	textfieldBitmap = pygame.Surface([1, 1])
-
 	textColor = [255,255,255]
 	textBgColor = [255,255,255]
 	
@@ -51,7 +49,8 @@ class Textfield(AbstractDrawable):
 				Paragraph(self).setObjectState(paragraphData)
 
 	@overrides(AbstractDrawable)
-	def recalcSize(self): self.surface = Surface(self.size())
+	def recalcSize(self):
+		for par in self.getParagraphList(): par.recalcSurfaceBacursively()
 
 	# operations with text
 
@@ -116,6 +115,7 @@ class Textfield(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def recalcSurface(self):
 		# not resized correctly lol
+		if self.size() != (self.surface.get_width(), self.surface.get_height()): self.surface = Surface(self.size())
 		self.surface.fill([255,255,255])
 		parIdx, rowIdx = self.getParIdxAndRowIdxToPrintFrom()
 		
@@ -130,7 +130,7 @@ class Textfield(AbstractDrawable):
 	# field getters/setters
 
 	def getParentBlock(self):
-		""":rtype: classes.Drawable.Screen.Block.TextBlock"""
+		""":rtype: classes.Drawable.Screen.Block.TextBlock.TextBlock"""
 		return self.getParent()
 
 	def setTextColor(self, value):

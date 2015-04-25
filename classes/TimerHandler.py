@@ -1,3 +1,4 @@
+from time import sleep
 import pygame
 from classes.Drawable.AbstractHandler import AbstractHandler
 from classes.Drawable.Screen.Screen import Screen
@@ -25,6 +26,7 @@ class TimerHandler(object):
 		Screen.getInstance().getSurface()
 		pygame.display.flip()
 
-		pygame.time.delay(self.frameDelay)
+		# pygame.time.delay(self.frameDelay)
+		sleep(self.frameDelay / 1000)
 
 		self.iterationNo += 1

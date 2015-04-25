@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pygame
+from pygame.surface import Surface
 from classes.Drawable.Screen.Block.Input.Paragraph.ParagraphHandler import ParagraphHandler
 from classes.Fp import split, overrides
 from classes.Constants import Constants
@@ -26,7 +27,7 @@ class Paragraph(AbstractDrawable):
 
 	@overrides(AbstractDrawable)
 	def recalcSurface(self):
-		self.surface = pygame.Surface(self.size())
+		if self.size() != (self.surface.get_width(), self.surface.get_height()): self.surface = Surface(self.size())
 		self.surface.fill(self.getBgColor())
 		i = 0
 		for row in self.getRowList():

@@ -143,7 +143,8 @@ class AbstractDrawable(metaclass=ABCMeta):
 			self.surface = pygame.Surface([self.width, self.height])
 			self.recalcSurfaceBacursively()
 
-			for child in self.childList:
+			# TODO: no!
+			for child in self.getChildList():
 				child.recalcSize()
 				child.recalcSurfaceBacursively()
 

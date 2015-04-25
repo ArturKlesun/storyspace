@@ -27,7 +27,8 @@ class Screen(AbstractDrawable):
 	@overrides(AbstractDrawable)
 	def __init__(self):
 		self.scaleKoef = 1.0
-		self.camPos([0,0])
+		self.camLeft = 0
+		self.camTop = 0
 		self.isFullscreen = False
 		self.curMousePos = [0,0] # TODO: kinda deprecated
 

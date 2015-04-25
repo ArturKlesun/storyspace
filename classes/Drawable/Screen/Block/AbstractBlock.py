@@ -66,8 +66,12 @@ class AbstractBlock(AbstractDrawable):
 		super(AbstractBlock, self).destroy()
 	
 	@overrides(AbstractDrawable)
-	def recalcSize(self):
-		pass
+	def recalcSize(self): pass
+
+	@overrides(AbstractDrawable)
+	def getHandler(self):
+		""":rtype: classes.Drawable.Screen.Block.AbstractBlockHandler.AbstractBlockHandler"""
+		return super(AbstractBlock, self).getHandler()
 
 	def calcIsResizeCornerPointed(self, realMousePos: list):
 		mousePos = self.getRootParent().calcMouseAbsolutePos(realMousePos)
